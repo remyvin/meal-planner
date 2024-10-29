@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // ------------ TYPES ------------
+type DayOfWeek = 'lundi' | 'mardi' | 'mercredi' | 'jeudi' | 'vendredi' | 'samedi' | 'dimanche';
+type MealTime = 'midi' | 'soir';
+
 interface Ingredient {
   name: string;
   quantity: number;
@@ -26,26 +29,8 @@ interface Recipe {
   id: number;
   name: string;
   ingredients: Ingredient[];
-  tags: string[];
+  tags: MealTime[];
   instructions?: string[];
-}
-
-interface MealComponentProps {
-  day: string;
-  period: 'midi' | 'soir';
-  meal: Recipe | null;
-  setWeeklyPlan: React.Dispatch<React.SetStateAction<WeeklyPlan>>;
-  recipes: Recipe[];
-}
-
-interface WeeklyPlan {
-  lundi: DayMeals;
-  mardi: DayMeals;
-  mercredi: DayMeals;
-  jeudi: DayMeals;
-  vendredi: DayMeals;
-  samedi: DayMeals;
-  dimanche: DayMeals;
 }
 
 interface DayMeals {
@@ -53,10 +38,29 @@ interface DayMeals {
   soir: Recipe | null;
 }
 
+interface WeeklyPlan {
+  [key in DayOfWeek]: DayMeals;
+}
+
+interface MealComponentProps {
+  day: DayOfWeek;
+  period: MealTime;
+  meal: Recipe | null;
+  setWeeklyPlan: React.Dispatch<React.SetStateAction<WeeklyPlan>>;
+  recipes: Recipe[];
+}
+
 type FormData = Omit<Recipe, 'id'>;
 
-// Types pour les handlers
-type SetStateType<T> = React.Dispatch<React.SetStateAction<T>>;
+// Constantes pour les jours et périodes
+const DAYS: DayOfWeek[] = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+const MEAL_TIMES: MealTime[] = ['midi', 'soir'];
+
+// État initial du planning
+const INITIAL_WEEKLY_PLAN: WeeklyPlan = DAYS.reduce((acc, day) => ({
+  ...acc,
+  [day]: { midi: null, soir: null }
+}), {} as WeeklyPlan);
 
 // ------------ CATÉGORIES ------------
 const CATEGORIES = {
@@ -120,12 +124,12 @@ const defaultRecipes: Recipe[] = [
 ];
 
 // ------------ COMPOSANT REPAS ------------
-const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealComponentProps) => {
+const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWeeklyPlan, recipes }) => {
   const [localSearchQuery, setLocalSearchQuery] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const getFilteredRecipes = (period: 'midi' | 'soir', query: string): Recipe[] => {
+  const getFilteredRecipes = (period: MealTime, query: string): Recipe[] => {
     return recipes.filter(recipe => 
       recipe.tags.includes(period) && 
       recipe.name.toLowerCase().includes(query.toLowerCase())
@@ -212,17 +216,9 @@ const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealCompon
 };
 
 // ------------ COMPOSANT PRINCIPAL ------------
-const MealPlanner = () => {
+const MealPlanner: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>({
-    lundi: { midi: null, soir: null },
-    mardi: { midi: null, soir: null },
-    mercredi: { midi: null, soir: null },
-    jeudi: { midi: null, soir: null },
-    vendredi: { midi: null, soir: null },
-    samedi: { midi: null, soir: null },
-    dimanche: { midi: null, soir: null }
-  });
+  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>(INITIAL_WEEKLY_PLAN);
   const [recipes, setRecipes] = useState<Recipe[]>(defaultRecipes);
   const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
@@ -232,6 +228,22 @@ const MealPlanner = () => {
     tags: [],
     instructions: []
   });
+
+  const generateWeeklyPlan = (): void => {
+    const newPlan: WeeklyPlan = { ...INITIAL_WEEKLY_PLAN };
+    
+    DAYS.forEach((day) => {
+      const midiRecipes = recipes.filter(r => r.tags.includes('midi'));
+      const soirRecipes = recipes.filter(r => r.tags.includes('soir'));
+      
+      newPlan[day] = {
+        midi: midiRecipes.length > 0 ? midiRecipes[Math.floor(Math.random() * midiRecipes.length)] : null,
+        soir: soirRecipes.length > 0 ? soirRecipes[Math.floor(Math.random() * soirRecipes.length)] : null
+      };
+    });
+
+    setWeeklyPlan(newPlan);
+  };
 
   const formatUnit = (quantity: number, unit: string): string => {
     if (unit === 'pièces' || unit === 'pièce') {
@@ -490,53 +502,29 @@ const generateWeeklyPlan = (): void => {
 
   // Rendu principal
   return (
-    <div className="p-4 max-w-6xl mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Planning */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              Planning de la semaine
-              <div className="flex gap-2">
-                <Button onClick={generateWeeklyPlan} variant="outline">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Générer
-                </Button>
-                <Button 
-                  onClick={exportPlanningAndGroceries} 
-                  variant="outline"
-                  className="bg-green-50 hover:bg-green-100"
-                >
-                  <ShoppingBag className="w-4 h-4 mr-2" />
-                  Exporter
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {Object.entries(weeklyPlan).map(([day, meals]) => (
-              <div key={day} className="mb-4">
-                <h3 className="font-bold mb-2 capitalize">{day}</h3>
-                <div className="space-y-2">
-                  <MealComponent 
-                    day={day} 
-                    period="midi" 
-                    meal={meals.midi}
-                    setWeeklyPlan={setWeeklyPlan}
-                    recipes={recipes}
-                  />
-                  <MealComponent 
-                    day={day} 
-                    period="soir" 
-                    meal={meals.soir}
-                    setWeeklyPlan={setWeeklyPlan}
-                    recipes={recipes}
-                  />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+   {DAYS.map((day) => (
+      <div key={day} className="mb-4">
+        <h3 className="font-bold mb-2 capitalize">{day}</h3>
+        <div className="space-y-2">
+          <MealComponent 
+            day={day}
+            period="midi" 
+            meal={weeklyPlan[day].midi}
+            setWeeklyPlan={setWeeklyPlan}
+            recipes={recipes}
+          />
+          <MealComponent 
+            day={day}
+            period="soir" 
+            meal={weeklyPlan[day].soir}
+            setWeeklyPlan={setWeeklyPlan}
+            recipes={recipes}
+          />
+        </div>
+      </div>
+    ))}
+  );
+};
 
         {/* Liste de courses */}
         <Card>
