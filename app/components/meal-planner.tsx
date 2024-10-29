@@ -109,7 +109,7 @@ const defaultRecipes: Recipe[] = [
 ];
 
 // ------------ COMPOSANT REPAS ------------
-const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }) => {
+const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealComponentProps) => {
   const [localSearchQuery, setLocalSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
