@@ -47,6 +47,9 @@ interface WeeklyPlan {
 
 type FormData = Omit<Recipe, 'id'>;
 
+// Types pour les handlers
+type SetStateType<T> = React.Dispatch<React.SetStateAction<T>>;
+
 // ------------ CATÉGORIES ------------
 const CATEGORIES = {
   LEGUMES: "Légumes",
@@ -110,9 +113,17 @@ const defaultRecipes: Recipe[] = [
 
 // ------------ COMPOSANT REPAS ------------
 const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealComponentProps) => {
-  const [localSearchQuery, setLocalSearchQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState<string>("");
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const getFilteredRecipes = (period: 'midi' | 'soir', query: string): Recipe[] => {
+    return recipes.filter(recipe => 
+      recipe.tags.includes(period) && 
+      recipe.name.toLowerCase().includes(query.toLowerCase())
+    );
+  };
+
 
   React.useEffect(() => {
     if (isOpen) {
@@ -123,14 +134,8 @@ const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealCompon
       setLocalSearchQuery("");
     }
   }, [isOpen]);
-
-  const getFilteredRecipes = (period, query) => {
-    return recipes.filter(recipe => 
-      recipe.tags.includes(period) && 
-      recipe.name.toLowerCase().includes(query.toLowerCase())
-    );
-  };
-
+  
+  
   return (
     <div className="flex items-center justify-between p-2 border rounded">
       <div className="flex items-center gap-2">
@@ -200,8 +205,7 @@ const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealCompon
 
 // ------------ COMPOSANT PRINCIPAL ------------
 const MealPlanner = () => {
-  // États
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>({
     lundi: { midi: null, soir: null },
     mardi: { midi: null, soir: null },
@@ -212,7 +216,7 @@ const MealPlanner = () => {
     dimanche: { midi: null, soir: null }
   });
   const [recipes, setRecipes] = useState<Recipe[]>(defaultRecipes);
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -221,13 +225,12 @@ const MealPlanner = () => {
     instructions: []
   });
 
-  // Fonction pour formater les unités
-const formatUnit = (quantity: number, unit: string): string => {
-  if (unit === 'pièces' || unit === 'pièce') {
-    return quantity > 1 ? 'pièces' : 'pièce';
-  }
-  return unit;
-};
+  const formatUnit = (quantity: number, unit: string): string => {
+    if (unit === 'pièces' || unit === 'pièce') {
+      return quantity > 1 ? 'pièces' : 'pièce';
+    }
+    return unit;
+  };
   
   // Chargement initial des données
   React.useEffect(() => {
@@ -269,8 +272,8 @@ const formatUnit = (quantity: number, unit: string): string => {
     }
   }, [recipes, weeklyPlan, isLoading]);
 
-  const generateWeeklyPlan = () => {
-    const newPlan = {};
+  const generateWeeklyPlan = (): void => {
+    const newPlan: WeeklyPlan = {} as WeeklyPlan;
     Object.keys(weeklyPlan).forEach(day => {
       const midiRecipes = recipes.filter(r => r.tags.includes('midi'));
       const soirRecipes = recipes.filter(r => r.tags.includes('soir'));
@@ -283,8 +286,8 @@ const formatUnit = (quantity: number, unit: string): string => {
     setWeeklyPlan(newPlan);
   };
 
-  const calculateGroceryList = () => {
-    const groceries = {};
+  const calculateGroceryList = (): { [category: string]: Ingredient[] } => {
+    const groceries: { [key: string]: Ingredient } = {};
     Object.values(weeklyPlan).forEach(day => {
       [day.midi, day.soir].forEach(meal => {
         if (!meal) return;
@@ -314,10 +317,9 @@ const formatUnit = (quantity: number, unit: string): string => {
     return groupedGroceries;
   };
 
-  const exportPlanningAndGroceries = () => {
+	const exportPlanningAndGroceries = (): void => {
+    const createLine = (char: string, length: number): string => char.repeat(length) + '\n';
     const groceriesByCategory = calculateGroceryList();
-    
-    const createLine = (char, length) => char.repeat(length) + '\n';
     const tableLine = () => createLine('-', 100);
   
     let exportText = "PLANNING DE LA SEMAINE\n";
@@ -383,7 +385,7 @@ const formatUnit = (quantity: number, unit: string): string => {
     URL.revokeObjectURL(url);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (formData.name.trim() === "") {
       alert("Le nom de la recette est obligatoire");
       return;
@@ -428,7 +430,7 @@ const formatUnit = (quantity: number, unit: string): string => {
     });
   };
 
-  const handleEdit = (recipe) => {
+  const handleEdit = (recipe: Recipe): void => {
     setEditingRecipe(recipe);
     setFormData({
       name: recipe.name,
@@ -439,7 +441,7 @@ const formatUnit = (quantity: number, unit: string): string => {
     setShowEditDialog(true);
   };
 
-  const handleDeleteRecipe = (recipeId) => {
+  const handleDeleteRecipe = (recipeId: number): void => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette recette ?')) {
       return;
     }
