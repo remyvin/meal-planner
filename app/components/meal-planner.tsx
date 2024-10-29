@@ -1,7 +1,7 @@
 'use client';
 
 // ------------ IMPORTS ------------
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Sun, Moon, ShoppingBag, RefreshCw, Search, Plus, Edit, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ interface DayMeals {
 }
 
 interface WeeklyPlan {
-  [key in DayOfWeek]: DayMeals;
+  [key: string]: DayMeals;
 }
 
 interface MealComponentProps {
@@ -52,17 +52,7 @@ interface MealComponentProps {
 
 type FormData = Omit<Recipe, 'id'>;
 
-// Constantes pour les jours et périodes
-const DAYS: DayOfWeek[] = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-const MEAL_TIMES: MealTime[] = ['midi', 'soir'];
-
-// État initial du planning
-const INITIAL_WEEKLY_PLAN: WeeklyPlan = DAYS.reduce((acc, day) => ({
-  ...acc,
-  [day]: { midi: null, soir: null }
-}), {} as WeeklyPlan);
-
-// ------------ CATÉGORIES ------------
+// ------------ CONSTANTES ------------
 const CATEGORIES = {
   LEGUMES: "Légumes",
   VIANDES: "Viandes",
@@ -70,7 +60,10 @@ const CATEGORIES = {
   FRAIS: "Produits frais",
   EPICERIE: "Épicerie",
   AUTRES: "Autres"
-};
+} as const;
+
+const DAYS: DayOfWeek[] = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+const MEAL_TIMES: MealTime[] = ['midi', 'soir'];
 
 // ------------ RECETTES PAR DÉFAUT ------------
 const defaultRecipes: Recipe[] = [
@@ -82,12 +75,12 @@ const defaultRecipes: Recipe[] = [
       { name: "Lardons", quantity: 150, unit: "g", category: CATEGORIES.VIANDES },
       { name: "Oeufs", quantity: 2, unit: "pièces", category: CATEGORIES.FRAIS },
     ],
-    tags: ['midi', 'soir'],
+    tags: ['midi', 'soir'] as MealTime[],
     instructions: [
       "Faire bouillir l'eau pour les pâtes",
       "Faire revenir les lardons",
       "Cuire les pâtes al dente",
-      "Mélanger les œufs battus avec les pâtes et les lardons",
+      "Mélanger les œufs battus avec les pâtes et les lardons"
     ]
   },
   {
@@ -97,7 +90,7 @@ const defaultRecipes: Recipe[] = [
       { name: "Poulet", quantity: 200, unit: "g", category: CATEGORIES.VIANDES },
       { name: "Carottes", quantity: 150, unit: "g", category: CATEGORIES.LEGUMES },
     ],
-    tags: ['midi'],
+    tags: ['midi'] as MealTime[],
     instructions: [
       "Préchauffer le four à 180°C",
       "Préparer le poulet",
@@ -113,7 +106,7 @@ const defaultRecipes: Recipe[] = [
       { name: "Poireaux", quantity: 100, unit: "g", category: CATEGORIES.LEGUMES },
       { name: "Pommes de terre", quantity: 100, unit: "g", category: CATEGORIES.FECULENTS },
     ],
-    tags: ['soir'],
+    tags: ['soir'] as MealTime[],
     instructions: [
       "Éplucher et couper les légumes",
       "Faire revenir les légumes",
@@ -123,21 +116,24 @@ const defaultRecipes: Recipe[] = [
   }
 ];
 
+// État initial du planning
+const INITIAL_WEEKLY_PLAN: WeeklyPlan = {
+  lundi: { midi: null, soir: null },
+  mardi: { midi: null, soir: null },
+  mercredi: { midi: null, soir: null },
+  jeudi: { midi: null, soir: null },
+  vendredi: { midi: null, soir: null },
+  samedi: { midi: null, soir: null },
+  dimanche: { midi: null, soir: null }
+};
+
 // ------------ COMPOSANT REPAS ------------
 const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWeeklyPlan, recipes }) => {
   const [localSearchQuery, setLocalSearchQuery] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const getFilteredRecipes = (period: MealTime, query: string): Recipe[] => {
-    return recipes.filter(recipe => 
-      recipe.tags.includes(period) && 
-      recipe.name.toLowerCase().includes(query.toLowerCase())
-    );
-  };
-
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
         inputRef.current?.focus();
@@ -146,8 +142,14 @@ const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWee
       setLocalSearchQuery("");
     }
   }, [isOpen]);
-  
-  
+
+  const getFilteredRecipes = (period: MealTime, query: string): Recipe[] => {
+    return recipes.filter(recipe => 
+      recipe.tags.includes(period) && 
+      recipe.name.toLowerCase().includes(query.toLowerCase())
+    );
+  };
+
   return (
     <div className="flex items-center justify-between p-2 border rounded">
       <div className="flex items-center gap-2">
@@ -174,7 +176,7 @@ const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWee
                 value={localSearchQuery}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalSearchQuery(e.target.value)}
                 onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
+                onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
               />
             </div>
             {getFilteredRecipes(period, localSearchQuery).map(recipe => (
@@ -228,33 +230,18 @@ const MealPlanner: React.FC = () => {
     tags: [],
     instructions: []
   });
-
-  const generateWeeklyPlan = (): void => {
-    const newPlan: WeeklyPlan = { ...INITIAL_WEEKLY_PLAN };
-    
-    DAYS.forEach((day) => {
-      const midiRecipes = recipes.filter(r => r.tags.includes('midi'));
-      const soirRecipes = recipes.filter(r => r.tags.includes('soir'));
-      
-      newPlan[day] = {
-        midi: midiRecipes.length > 0 ? midiRecipes[Math.floor(Math.random() * midiRecipes.length)] : null,
-        soir: soirRecipes.length > 0 ? soirRecipes[Math.floor(Math.random() * soirRecipes.length)] : null
-      };
-    });
-
-    setWeeklyPlan(newPlan);
-  };
-
+  
+  // Formatage des unités
   const formatUnit = (quantity: number, unit: string): string => {
     if (unit === 'pièces' || unit === 'pièce') {
       return quantity > 1 ? 'pièces' : 'pièce';
     }
     return unit;
   };
-  
+
   // Chargement initial des données
-  React.useEffect(() => {
-    const loadData = () => {
+  useEffect(() => {
+    const loadData = (): void => {
       try {
         const savedRecipes = localStorage.getItem('recipes');
         if (savedRecipes) {
@@ -277,8 +264,8 @@ const MealPlanner: React.FC = () => {
   }, []);
 
   // Sauvegarde des données
-  React.useEffect(() => {
-    const saveData = () => {
+  useEffect(() => {
+    const saveData = (): void => {
       try {
         localStorage.setItem('recipes', JSON.stringify(recipes));
         localStorage.setItem('weeklyPlan', JSON.stringify(weeklyPlan));
@@ -292,32 +279,27 @@ const MealPlanner: React.FC = () => {
     }
   }, [recipes, weeklyPlan, isLoading]);
 
-const generateWeeklyPlan = (): void => {
-  const newPlan: WeeklyPlan = {
-    lundi: { midi: null, soir: null },
-    mardi: { midi: null, soir: null },
-    mercredi: { midi: null, soir: null },
-    jeudi: { midi: null, soir: null },
-    vendredi: { midi: null, soir: null },
-    samedi: { midi: null, soir: null },
-    dimanche: { midi: null, soir: null }
+  // Génération du planning
+  const generateWeeklyPlan = (): void => {
+    const newPlan: WeeklyPlan = { ...INITIAL_WEEKLY_PLAN };
+    
+    DAYS.forEach((day) => {
+      const midiRecipes = recipes.filter(r => r.tags.includes('midi'));
+      const soirRecipes = recipes.filter(r => r.tags.includes('soir'));
+      
+      newPlan[day] = {
+        midi: midiRecipes.length > 0 ? midiRecipes[Math.floor(Math.random() * midiRecipes.length)] : null,
+        soir: soirRecipes.length > 0 ? soirRecipes[Math.floor(Math.random() * soirRecipes.length)] : null
+      };
+    });
+
+    setWeeklyPlan(newPlan);
   };
 
-  Object.keys(weeklyPlan).forEach((day: string) => {
-    const midiRecipes = recipes.filter(r => r.tags.includes('midi'));
-    const soirRecipes = recipes.filter(r => r.tags.includes('soir'));
-    
-    newPlan[day as keyof WeeklyPlan] = {
-      midi: midiRecipes.length > 0 ? midiRecipes[Math.floor(Math.random() * midiRecipes.length)] : null,
-      soir: soirRecipes.length > 0 ? soirRecipes[Math.floor(Math.random() * soirRecipes.length)] : null
-    };
-  });
-
-  setWeeklyPlan(newPlan);
-};
-
+  // Calcul de la liste de courses
   const calculateGroceryList = (): { [category: string]: Ingredient[] } => {
     const groceries: { [key: string]: Ingredient } = {};
+    
     Object.values(weeklyPlan).forEach(day => {
       [day.midi, day.soir].forEach(meal => {
         if (!meal) return;
@@ -342,23 +324,26 @@ const generateWeeklyPlan = (): void => {
       }
       acc[category].push(ingredient);
       return acc;
-    }, {});
+    }, {} as { [category: string]: Ingredient[] });
 
     return groupedGroceries;
   };
 
-	const exportPlanningAndGroceries = (): void => {
-    const createLine = (char: string, length: number): string => char.repeat(length) + '\n';
+  // Export du planning et de la liste de courses
+  const exportPlanningAndGroceries = (): void => {
     const groceriesByCategory = calculateGroceryList();
-    const tableLine = () => createLine('-', 100);
-  
+    
+    const createLine = (char: string, length: number): string => char.repeat(length) + '\n';
+    const tableLine = (): string => createLine('-', 100);
+
     let exportText = "PLANNING DE LA SEMAINE\n";
     exportText += createLine('=', 100) + '\n';
     
     exportText += '| JOUR       | MIDI                                      | SOIR                                      |\n';
     exportText += tableLine();
     
-    Object.entries(weeklyPlan).forEach(([day, meals]) => {
+    DAYS.forEach(day => {
+      const meals = weeklyPlan[day];
       const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
       const midiName = (meals.midi?.name || 'Pas de repas').padEnd(40);
       const soirName = (meals.soir?.name || 'Pas de repas').padEnd(40);
@@ -366,7 +351,8 @@ const generateWeeklyPlan = (): void => {
       exportText += `| ${capitalizedDay.padEnd(10)} | ${midiName} | ${soirName} |\n`;
       exportText += tableLine();
     });
-    
+	
+	// Suite de exportPlanningAndGroceries
     exportText += "\nLISTE DE COURSES\n";
     exportText += createLine('=', 50) + '\n';
     
@@ -415,6 +401,7 @@ const generateWeeklyPlan = (): void => {
     URL.revokeObjectURL(url);
   };
 
+  // Gestion des recettes
   const handleSubmit = (): void => {
     if (formData.name.trim() === "") {
       alert("Le nom de la recette est obligatoire");
@@ -433,9 +420,10 @@ const generateWeeklyPlan = (): void => {
       setRecipes(recipes.map(r => 
         r.id === editingRecipe.id ? { ...formData, id: editingRecipe.id } : r
       ));
+      
       setWeeklyPlan(prev => {
         const newPlan = { ...prev };
-        Object.keys(newPlan).forEach(day => {
+        DAYS.forEach((day) => {
           if (newPlan[day].midi?.id === editingRecipe.id) {
             newPlan[day].midi = { ...formData, id: editingRecipe.id };
           }
@@ -477,9 +465,10 @@ const generateWeeklyPlan = (): void => {
     }
 
     setRecipes(recipes.filter(r => r.id !== recipeId));
+    
     setWeeklyPlan(prev => {
       const newPlan = { ...prev };
-      Object.keys(newPlan).forEach(day => {
+      DAYS.forEach((day) => {
         if (newPlan[day].midi?.id === recipeId) {
           newPlan[day].midi = null;
         }
@@ -491,7 +480,7 @@ const generateWeeklyPlan = (): void => {
     });
   };
   
-  // Affichage du loader pendant le chargement
+  // Loading screen
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -502,29 +491,53 @@ const generateWeeklyPlan = (): void => {
 
   // Rendu principal
   return (
-   {DAYS.map((day) => (
-      <div key={day} className="mb-4">
-        <h3 className="font-bold mb-2 capitalize">{day}</h3>
-        <div className="space-y-2">
-          <MealComponent 
-            day={day}
-            period="midi" 
-            meal={weeklyPlan[day].midi}
-            setWeeklyPlan={setWeeklyPlan}
-            recipes={recipes}
-          />
-          <MealComponent 
-            day={day}
-            period="soir" 
-            meal={weeklyPlan[day].soir}
-            setWeeklyPlan={setWeeklyPlan}
-            recipes={recipes}
-          />
-        </div>
-      </div>
-    ))}
-  );
-};
+    <div className="p-4 max-w-6xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Planning */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex justify-between items-center">
+              Planning de la semaine
+              <div className="flex gap-2">
+                <Button onClick={generateWeeklyPlan} variant="outline">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Générer
+                </Button>
+                <Button 
+                  onClick={exportPlanningAndGroceries} 
+                  variant="outline"
+                  className="bg-green-50 hover:bg-green-100"
+                >
+                  <ShoppingBag className="w-4 h-4 mr-2" />
+                  Exporter
+                </Button>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {DAYS.map((day) => (
+              <div key={day} className="mb-4">
+                <h3 className="font-bold mb-2 capitalize">{day}</h3>
+                <div className="space-y-2">
+                  <MealComponent 
+                    day={day}
+                    period="midi" 
+                    meal={weeklyPlan[day].midi}
+                    setWeeklyPlan={setWeeklyPlan}
+                    recipes={recipes}
+                  />
+                  <MealComponent 
+                    day={day}
+                    period="soir" 
+                    meal={weeklyPlan[day].soir}
+                    setWeeklyPlan={setWeeklyPlan}
+                    recipes={recipes}
+                  />
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
 
         {/* Liste de courses */}
         <Card>
@@ -548,44 +561,6 @@ const generateWeeklyPlan = (): void => {
           </CardContent>
         </Card>
       </div>
-	  
-{/* Liste des préparations */}
-<Card className="col-span-1 md:col-span-2 mt-4">
-  <CardHeader>
-    <CardTitle>
-      Préparations de la semaine
-    </CardTitle>
-  </CardHeader>
-  <CardContent>
-    <div className="space-y-6">
-      {/* Créer un Set des recettes uniques du planning */}
-      {Array.from(
-        new Set(
-          Object.values(weeklyPlan)
-            .flatMap(day => [day.midi, day.soir])
-            .filter(meal => meal && meal.instructions && meal.instructions.length > 0)
-            .map(meal => meal.id)
-        )
-      ).map(recipeId => {
-        const recipe = recipes.find(r => r.id === recipeId);
-        if (!recipe || !recipe.instructions) return null;
-
-        return (
-          <div key={recipe.id} className="border rounded-lg p-4">
-            <h3 className="font-bold mb-4">{recipe.name}</h3>
-            <ol className="list-decimal pl-5">
-              {recipe.instructions.map((instruction, idx) => (
-                <li key={idx} className="mb-1">
-                  {instruction}
-                </li>
-              ))}
-            </ol>
-          </div>
-        );
-      })}
-    </div>
-  </CardContent>
-</Card>
 
       {/* Section Recettes */}
       <Card className="mt-4">
@@ -607,7 +582,8 @@ const generateWeeklyPlan = (): void => {
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+		
+		<CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {recipes.map(recipe => (
               <Card key={recipe.id}>
@@ -682,7 +658,8 @@ const generateWeeklyPlan = (): void => {
               placeholder="Nom de la recette"
               className="w-full p-2 border rounded"
               value={formData.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                setFormData({ ...formData, name: e.target.value })}
             />
 
             <div className="flex gap-4">
@@ -745,7 +722,7 @@ const generateWeeklyPlan = (): void => {
                   <select
                     className="w-24 p-2 border rounded"
                     value={ingredient.unit}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                       const newIngredients = [...formData.ingredients];
                       newIngredients[index].unit = e.target.value;
                       setFormData({ ...formData, ingredients: newIngredients });
@@ -759,7 +736,7 @@ const generateWeeklyPlan = (): void => {
                   <select
                     className="w-32 p-2 border rounded"
                     value={ingredient.category}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                       const newIngredients = [...formData.ingredients];
                       newIngredients[index].category = e.target.value;
                       setFormData({ ...formData, ingredients: newIngredients });
@@ -790,7 +767,10 @@ const generateWeeklyPlan = (): void => {
               onClick={() => {
                 setFormData(prev => ({
                   ...prev,
-                  ingredients: [...prev.ingredients, { name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }]
+                  ingredients: [
+                    ...prev.ingredients, 
+                    { name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }
+                  ]
                 }));
               }}
             >
