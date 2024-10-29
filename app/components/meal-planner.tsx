@@ -39,10 +39,18 @@ interface MealComponentProps {
 }
 
 interface WeeklyPlan {
-  [key: string]: {
-    midi: Recipe | null;
-    soir: Recipe | null;
-  };
+  lundi: DayMeals;
+  mardi: DayMeals;
+  mercredi: DayMeals;
+  jeudi: DayMeals;
+  vendredi: DayMeals;
+  samedi: DayMeals;
+  dimanche: DayMeals;
+}
+
+interface DayMeals {
+  midi: Recipe | null;
+  soir: Recipe | null;
 }
 
 type FormData = Omit<Recipe, 'id'>;
@@ -160,8 +168,8 @@ const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealCompon
                 placeholder="Rechercher..."
                 className="w-full p-2 border rounded mb-2"
                 value={localSearchQuery}
-                onChange={(e) => setLocalSearchQuery(e.target.value)}
-                onClick={(e) => e.stopPropagation()}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalSearchQuery(e.target.value)}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
                 onKeyDown={(e) => e.stopPropagation()}
               />
             </div>
@@ -272,19 +280,29 @@ const MealPlanner = () => {
     }
   }, [recipes, weeklyPlan, isLoading]);
 
-  const generateWeeklyPlan = (): void => {
-    const newPlan: WeeklyPlan = {} as WeeklyPlan;
-    Object.keys(weeklyPlan).forEach(day => {
-      const midiRecipes = recipes.filter(r => r.tags.includes('midi'));
-      const soirRecipes = recipes.filter(r => r.tags.includes('soir'));
-      
-      newPlan[day] = {
-        midi: midiRecipes.length > 0 ? midiRecipes[Math.floor(Math.random() * midiRecipes.length)] : null,
-        soir: soirRecipes.length > 0 ? soirRecipes[Math.floor(Math.random() * soirRecipes.length)] : null
-      };
-    });
-    setWeeklyPlan(newPlan);
+const generateWeeklyPlan = (): void => {
+  const newPlan: WeeklyPlan = {
+    lundi: { midi: null, soir: null },
+    mardi: { midi: null, soir: null },
+    mercredi: { midi: null, soir: null },
+    jeudi: { midi: null, soir: null },
+    vendredi: { midi: null, soir: null },
+    samedi: { midi: null, soir: null },
+    dimanche: { midi: null, soir: null }
   };
+
+  Object.keys(weeklyPlan).forEach((day: string) => {
+    const midiRecipes = recipes.filter(r => r.tags.includes('midi'));
+    const soirRecipes = recipes.filter(r => r.tags.includes('soir'));
+    
+    newPlan[day as keyof WeeklyPlan] = {
+      midi: midiRecipes.length > 0 ? midiRecipes[Math.floor(Math.random() * midiRecipes.length)] : null,
+      soir: soirRecipes.length > 0 ? soirRecipes[Math.floor(Math.random() * soirRecipes.length)] : null
+    };
+  });
+
+  setWeeklyPlan(newPlan);
+};
 
   const calculateGroceryList = (): { [category: string]: Ingredient[] } => {
     const groceries: { [key: string]: Ingredient } = {};
@@ -676,14 +694,14 @@ const MealPlanner = () => {
               placeholder="Nom de la recette"
               className="w-full p-2 border rounded"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
             />
 
             <div className="flex gap-4">
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={formData.tags.includes('midi')}
-                  onCheckedChange={(checked) => {
+                  onCheckedChange={(checked: boolean) => {
                     setFormData(prev => ({
                       ...prev,
                       tags: checked 
@@ -697,7 +715,7 @@ const MealPlanner = () => {
               <label className="flex items-center gap-2">
                 <Checkbox
                   checked={formData.tags.includes('soir')}
-                  onCheckedChange={(checked) => {
+                  onCheckedChange={(checked: boolean) => {
                     setFormData(prev => ({
                       ...prev,
                       tags: checked 
@@ -719,7 +737,7 @@ const MealPlanner = () => {
                     placeholder="Ingrédient"
                     className="flex-1 p-2 border rounded"
                     value={ingredient.name}
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const newIngredients = [...formData.ingredients];
                       newIngredients[index].name = e.target.value;
                       setFormData({ ...formData, ingredients: newIngredients });
@@ -730,7 +748,7 @@ const MealPlanner = () => {
                     placeholder="Quantité"
                     className="w-24 p-2 border rounded"
                     value={ingredient.quantity}
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const newIngredients = [...formData.ingredients];
                       newIngredients[index].quantity = Number(e.target.value);
                       setFormData({ ...formData, ingredients: newIngredients });
@@ -739,7 +757,7 @@ const MealPlanner = () => {
                   <select
                     className="w-24 p-2 border rounded"
                     value={ingredient.unit}
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const newIngredients = [...formData.ingredients];
                       newIngredients[index].unit = e.target.value;
                       setFormData({ ...formData, ingredients: newIngredients });
@@ -753,7 +771,7 @@ const MealPlanner = () => {
                   <select
                     className="w-32 p-2 border rounded"
                     value={ingredient.category}
-                    onChange={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const newIngredients = [...formData.ingredients];
                       newIngredients[index].category = e.target.value;
                       setFormData({ ...formData, ingredients: newIngredients });
@@ -805,7 +823,7 @@ const MealPlanner = () => {
                       placeholder={`Étape ${index + 1}`}
                       className="flex-1 p-2 border rounded-r"
                       value={instruction}
-                      onChange={(e) => {
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const newInstructions = [...(formData.instructions || [])];
                         newInstructions[index] = e.target.value;
                         setFormData(prev => ({ ...prev, instructions: newInstructions }));
