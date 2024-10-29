@@ -582,8 +582,7 @@ const MealPlanner: React.FC = () => {
             </Button>
           </CardTitle>
         </CardHeader>
-		
-		<CardContent>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {recipes.map(recipe => (
               <Card key={recipe.id}>
@@ -646,202 +645,204 @@ const MealPlanner: React.FC = () => {
 
       {/* Dialog pour édition/création de recette */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingRecipe ? 'Modifier la recette' : 'Nouvelle recette'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <input
-              type="text"
-              placeholder="Nom de la recette"
-              className="w-full p-2 border rounded"
-              value={formData.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                setFormData({ ...formData, name: e.target.value })}
-            />
+        <DialogContent>
+          <div className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingRecipe ? 'Modifier la recette' : 'Nouvelle recette'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <input
+                type="text"
+                placeholder="Nom de la recette"
+                className="w-full p-2 border rounded"
+                value={formData.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                  setFormData({ ...formData, name: e.target.value })}
+              />
 
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2">
-                <Checkbox
-                  checked={formData.tags.includes('midi')}
-                  onCheckedChange={(checked: boolean) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      tags: checked 
-                        ? [...prev.tags.filter(t => t !== 'midi'), 'midi']
-                        : prev.tags.filter(t => t !== 'midi')
-                    }));
-                  }}
-                />
-                <span>Midi</span>
-              </label>
-              <label className="flex items-center gap-2">
-                <Checkbox
-                  checked={formData.tags.includes('soir')}
-                  onCheckedChange={(checked: boolean) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      tags: checked 
-                        ? [...prev.tags.filter(t => t !== 'soir'), 'soir']
-                        : prev.tags.filter(t => t !== 'soir')
-                    }));
-                  }}
-                />
-                <span>Soir</span>
-              </label>
-            </div>
-
-            {/* Ingrédients */}
-            <div className="space-y-2">
-              {formData.ingredients.map((ingredient, index) => (
-                <div key={index} className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Ingrédient"
-                    className="flex-1 p-2 border rounded"
-                    value={ingredient.name}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const newIngredients = [...formData.ingredients];
-                      newIngredients[index].name = e.target.value;
-                      setFormData({ ...formData, ingredients: newIngredients });
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2">
+                  <Checkbox
+                    checked={formData.tags.includes('midi')}
+                    onCheckedChange={(checked: boolean) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        tags: checked 
+                          ? [...prev.tags.filter(t => t !== 'midi'), 'midi']
+                          : prev.tags.filter(t => t !== 'midi')
+                      }));
                     }}
                   />
-                  <input
-                    type="number"
-                    placeholder="Quantité"
-                    className="w-24 p-2 border rounded"
-                    value={ingredient.quantity}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      const newIngredients = [...formData.ingredients];
-                      newIngredients[index].quantity = Number(e.target.value);
-                      setFormData({ ...formData, ingredients: newIngredients });
+                  <span>Midi</span>
+                </label>
+                <label className="flex items-center gap-2">
+                  <Checkbox
+                    checked={formData.tags.includes('soir')}
+                    onCheckedChange={(checked: boolean) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        tags: checked 
+                          ? [...prev.tags.filter(t => t !== 'soir'), 'soir']
+                          : prev.tags.filter(t => t !== 'soir')
+                      }));
                     }}
                   />
-                  <select
-                    className="w-24 p-2 border rounded"
-                    value={ingredient.unit}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                      const newIngredients = [...formData.ingredients];
-                      newIngredients[index].unit = e.target.value;
-                      setFormData({ ...formData, ingredients: newIngredients });
-                    }}
-                  >
-                    <option value="g">g</option>
-                    <option value="kg">kg</option>
-                    <option value="ml">ml</option>
-                    <option value="pièces">pièces</option>
-                  </select>
-                  <select
-                    className="w-32 p-2 border rounded"
-                    value={ingredient.category}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                      const newIngredients = [...formData.ingredients];
-                      newIngredients[index].category = e.target.value;
-                      setFormData({ ...formData, ingredients: newIngredients });
-                    }}
-                  >
-                    {Object.values(CATEGORIES).map(category => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      const newIngredients = formData.ingredients.filter((_, i) => i !== index);
-                      setFormData({ ...formData, ingredients: newIngredients });
-                    }}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
+                  <span>Soir</span>
+                </label>
+              </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setFormData(prev => ({
-                  ...prev,
-                  ingredients: [
-                    ...prev.ingredients, 
-                    { name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }
-                  ]
-                }));
-              }}
-            >
-              Ajouter un ingrédient
-            </Button>
-
-            {/* Instructions */}
-            <div className="border-t pt-4">
-              <h3 className="font-medium mb-2">Instructions de préparation</h3>
+              {/* Ingrédients */}
               <div className="space-y-2">
-                {(formData.instructions || []).map((instruction, index) => (
+                {formData.ingredients.map((ingredient, index) => (
                   <div key={index} className="flex gap-2">
-                    <span className="py-2 px-3 bg-gray-100 rounded-l">
-                      {index + 1}.
-                    </span>
                     <input
                       type="text"
-                      placeholder={`Étape ${index + 1}`}
-                      className="flex-1 p-2 border rounded-r"
-                      value={instruction}
+                      placeholder="Ingrédient"
+                      className="flex-1 p-2 border rounded"
+                      value={ingredient.name}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const newInstructions = [...(formData.instructions || [])];
-                        newInstructions[index] = e.target.value;
-                        setFormData(prev => ({ ...prev, instructions: newInstructions }));
+                        const newIngredients = [...formData.ingredients];
+                        newIngredients[index].name = e.target.value;
+                        setFormData({ ...formData, ingredients: newIngredients });
                       }}
                     />
+                    <input
+                      type="number"
+                      placeholder="Quantité"
+                      className="w-24 p-2 border rounded"
+                      value={ingredient.quantity}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const newIngredients = [...formData.ingredients];
+                        newIngredients[index].quantity = Number(e.target.value);
+                        setFormData({ ...formData, ingredients: newIngredients });
+                      }}
+                    />
+                    <select
+                      className="w-24 p-2 border rounded"
+                      value={ingredient.unit}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const newIngredients = [...formData.ingredients];
+                        newIngredients[index].unit = e.target.value;
+                        setFormData({ ...formData, ingredients: newIngredients });
+                      }}
+                    >
+                      <option value="g">g</option>
+                      <option value="kg">kg</option>
+                      <option value="ml">ml</option>
+                      <option value="pièces">pièces</option>
+                    </select>
+                    <select
+                      className="w-32 p-2 border rounded"
+                      value={ingredient.category}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                        const newIngredients = [...formData.ingredients];
+                        newIngredients[index].category = e.target.value;
+                        setFormData({ ...formData, ingredients: newIngredients });
+                      }}
+                    >
+                      {Object.values(CATEGORIES).map(category => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
                     <Button
                       variant="ghost"
                       onClick={() => {
-                        const newInstructions = formData.instructions?.filter((_, i) => i !== index);
-                        setFormData(prev => ({ ...prev, instructions: newInstructions }));
+                        const newIngredients = formData.ingredients.filter((_, i) => i !== index);
+                        setFormData({ ...formData, ingredients: newIngredients });
                       }}
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
                 ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setFormData(prev => ({
-                      ...prev,
-                      instructions: [...(prev.instructions || []), '']
-                    }));
-                  }}
-                >
-                  Ajouter une étape
-                </Button>
               </div>
-            </div>
 
-            <div className="flex justify-end gap-2 pt-4">
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => {
-                  setShowEditDialog(false);
-                  setEditingRecipe(null);
-                  setFormData({
-                    name: "",
-                    ingredients: [{ name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }],
-                    tags: [],
-                    instructions: []
-                  });
+                  setFormData(prev => ({
+                    ...prev,
+                    ingredients: [
+                      ...prev.ingredients, 
+                      { name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }
+                    ]
+                  }));
                 }}
               >
-                Annuler
+                Ajouter un ingrédient
               </Button>
-              <Button onClick={handleSubmit}>
-                {editingRecipe ? 'Modifier' : 'Ajouter'}
-              </Button>
+
+              {/* Instructions */}
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-2">Instructions de préparation</h3>
+                <div className="space-y-2">
+                  {(formData.instructions || []).map((instruction, index) => (
+                    <div key={index} className="flex gap-2">
+                      <span className="py-2 px-3 bg-gray-100 rounded-l">
+                        {index + 1}.
+                      </span>
+                      <input
+                        type="text"
+                        placeholder={`Étape ${index + 1}`}
+                        className="flex-1 p-2 border rounded-r"
+                        value={instruction}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const newInstructions = [...(formData.instructions || [])];
+                          newInstructions[index] = e.target.value;
+                          setFormData(prev => ({ ...prev, instructions: newInstructions }));
+                        }}
+                      />
+                      <Button
+                        variant="ghost"
+                        onClick={() => {
+                          const newInstructions = formData.instructions?.filter((_, i) => i !== index);
+                          setFormData(prev => ({ ...prev, instructions: newInstructions }));
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        instructions: [...(prev.instructions || []), '']
+                      }));
+                    }}
+                  >
+                    Ajouter une étape
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditDialog(false);
+                    setEditingRecipe(null);
+                    setFormData({
+                      name: "",
+                      ingredients: [{ name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }],
+                      tags: [],
+                      instructions: []
+                    });
+                  }}
+                >
+                  Annuler
+                </Button>
+                <Button onClick={handleSubmit}>
+                  {editingRecipe ? 'Modifier' : 'Ajouter'}
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
