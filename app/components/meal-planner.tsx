@@ -652,7 +652,7 @@ const MealPlanner: React.FC = () => {
                 {editingRecipe ? 'Modifier la recette' : 'Nouvelle recette'}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="max-h-[70vh] overflow-y-auto pr-6">
               <input
                 type="text"
                 placeholder="Nom de la recette"
