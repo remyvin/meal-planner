@@ -15,6 +15,7 @@ const DialogContent = React.forwardRef<HTMLDivElement>((
     </DialogPrimitive.Content>
   </DialogPrimitive.Portal>
 ));
+DialogContent.displayName = "DialogContent";
 
 const DialogHeader = React.forwardRef<HTMLDivElement>((
   { ...props }, 
@@ -22,6 +23,7 @@ const DialogHeader = React.forwardRef<HTMLDivElement>((
 ) => (
   <div ref={ref} {...props} />
 ));
+DialogHeader.displayName = "DialogHeader";
 
 const DialogTitle = DialogPrimitive.Title;
 
