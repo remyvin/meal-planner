@@ -5,7 +5,12 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 
 const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
-const DialogContent = React.forwardRef<HTMLDivElement>((
+
+interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>((
   { children, ...props }, 
   ref
 ) => (
@@ -17,11 +22,17 @@ const DialogContent = React.forwardRef<HTMLDivElement>((
 ));
 DialogContent.displayName = "DialogContent";
 
-const DialogHeader = React.forwardRef<HTMLDivElement>((
-  { ...props }, 
+interface DialogHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  children?: React.ReactNode;
+}
+
+const DialogHeader = React.forwardRef<HTMLDivElement, DialogHeaderProps>((
+  { children, ...props }, 
   ref
 ) => (
-  <div ref={ref} {...props} />
+  <div ref={ref} {...props}>
+    {children}
+  </div>
 ));
 DialogHeader.displayName = "DialogHeader";
 
