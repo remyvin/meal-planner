@@ -3,31 +3,26 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 
-const Dialog = DialogPrimitive.Root
-const DialogTrigger = DialogPrimitive.Trigger
-const DialogPortal = DialogPrimitive.Portal
-const DialogOverlay = DialogPrimitive.Overlay
-const DialogContent = DialogPrimitive.Content
-const DialogHeader = React.forwardRef
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={className}
-    {...props}
-  />
-))
-DialogHeader.displayName = "DialogHeader"
+const Dialog = DialogPrimitive.Root;
+const DialogTrigger = DialogPrimitive.Trigger;
+const DialogContent = React.forwardRef<HTMLDivElement>((
+  { children, ...props }, 
+  ref
+) => (
+  <DialogPrimitive.Portal>
+    <DialogPrimitive.Content ref={ref} {...props}>
+      {children}
+    </DialogPrimitive.Content>
+  </DialogPrimitive.Portal>
+));
 
-const DialogTitle = DialogPrimitive.Title
+const DialogHeader = React.forwardRef<HTMLDivElement>((
+  { ...props }, 
+  ref
+) => (
+  <div ref={ref} {...props} />
+));
 
-export {
-  Dialog,
-  DialogTrigger,
-  DialogPortal,
-  DialogOverlay,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-}
+const DialogTitle = DialogPrimitive.Title;
+
+export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle };
