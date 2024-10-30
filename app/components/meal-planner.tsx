@@ -651,13 +651,12 @@ const MealPlanner: React.FC = () => {
 
       {/* Dialog pour édition/création de recette */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
-          <div className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingRecipe ? 'Modifier la recette' : 'Nouvelle recette'}
-              </DialogTitle>
-            </DialogHeader>
+		  <DialogContent className="fixed inset-x-4 top-[50%] translate-y-[-50%] bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto max-h-[90vh] overflow-y-auto">
+			<DialogHeader>
+			  <DialogTitle className="text-lg font-medium">
+				{editingRecipe ? 'Modifier la recette' : 'Nouvelle recette'}
+			  </DialogTitle>
+			</DialogHeader>
             <div className="max-h-[70vh] overflow-y-auto pr-6">
               <input
                 type="text"
@@ -850,7 +849,6 @@ const MealPlanner: React.FC = () => {
                 </Button>
               </div>
             </div>
-          </div>
         </DialogContent>
       </Dialog>
     </div>
