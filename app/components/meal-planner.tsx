@@ -650,23 +650,31 @@ const MealPlanner: React.FC = () => {
       </Card>
 
       {/* Dialog pour édition/création de recette */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-		  <DialogContent className="fixed inset-x-4 top-[50%] translate-y-[-50%] bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto max-h-[90vh] overflow-y-auto">
-			<DialogHeader>
-			  <DialogTitle className="text-lg font-medium">
-				{editingRecipe ? 'Modifier la recette' : 'Nouvelle recette'}
-			  </DialogTitle>
-			</DialogHeader>
-            <div className="max-h-[70vh] overflow-y-auto pr-6">
-              <input
-                type="text"
-                placeholder="Nom de la recette"
-                className="w-full p-2 border rounded"
-                value={formData.name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                  setFormData({ ...formData, name: e.target.value })}
-              />
+ // Remplacez la partie Dialog de votre MealPlanner par ce code :
 
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingRecipe ? 'Modifier la recette' : 'Nouvelle recette'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="space-y-4">
+              {/* Nom de la recette */}
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Nom de la recette"
+                  className="w-full p-2 border rounded"
+                  value={formData.name}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                    setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+
+              {/* Checkboxes pour midi/soir */}
               <div className="flex gap-4">
                 <label className="flex items-center gap-2">
                   <Checkbox
@@ -698,14 +706,14 @@ const MealPlanner: React.FC = () => {
                 </label>
               </div>
 
-              {/* Ingrédients */}
+              {/* Liste des ingrédients */}
               <div className="space-y-2">
                 {formData.ingredients.map((ingredient, index) => (
-                  <div key={index} className="flex gap-2">
+                  <div key={index} className="grid grid-cols-[1fr,auto,auto,auto,auto] gap-2">
                     <input
                       type="text"
                       placeholder="Ingrédient"
-                      className="flex-1 p-2 border rounded"
+                      className="p-2 border rounded"
                       value={ingredient.name}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const newIngredients = [...formData.ingredients];
@@ -764,27 +772,28 @@ const MealPlanner: React.FC = () => {
                     </Button>
                   </div>
                 ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      ingredients: [
+                        ...prev.ingredients, 
+                        { name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }
+                      ]
+                    }));
+                  }}
+                  className="w-full"
+                >
+                  Ajouter un ingrédient
+                </Button>
               </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setFormData(prev => ({
-                    ...prev,
-                    ingredients: [
-                      ...prev.ingredients, 
-                      { name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }
-                    ]
-                  }));
-                }}
-              >
-                Ajouter un ingrédient
-              </Button>
-
               {/* Instructions */}
-              <div className="border-t pt-4">
-                <h3 className="font-medium mb-2">Instructions de préparation</h3>
+              <div className="space-y-2">
+                <h3 className="font-medium">Instructions de préparation</h3>
                 <div className="space-y-2">
                   {(formData.instructions || []).map((instruction, index) => (
                     <div key={index} className="flex gap-2">
@@ -822,33 +831,36 @@ const MealPlanner: React.FC = () => {
                         instructions: [...(prev.instructions || []), '']
                       }));
                     }}
+                    className="w-full"
                   >
                     Ajouter une étape
                   </Button>
                 </div>
               </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowEditDialog(false);
-                    setEditingRecipe(null);
-                    setFormData({
-                      name: "",
-                      ingredients: [{ name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }],
-                      tags: [],
-                      instructions: []
-                    });
-                  }}
-                >
-                  Annuler
-                </Button>
-                <Button onClick={handleSubmit}>
-                  {editingRecipe ? 'Modifier' : 'Ajouter'}
-                </Button>
-              </div>
             </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEditDialog(false);
+                setEditingRecipe(null);
+                setFormData({
+                  name: "",
+                  ingredients: [{ name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }],
+                  tags: [],
+                  instructions: []
+                });
+              }}
+            >
+              Annuler
+            </Button>
+            <Button onClick={handleSubmit}>
+              {editingRecipe ? 'Modifier' : 'Ajouter'}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
