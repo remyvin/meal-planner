@@ -496,10 +496,12 @@ const MealPlanner: React.FC = () => {
   }
 
   // Rendu principal
+  // Remplacez la section des commentaires dans le rendu principal par :
+
   return (
     <div className="p-4 max-w-6xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Planning */}
+        {/* === Planning === */}
         <Card>
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
@@ -545,7 +547,7 @@ const MealPlanner: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Liste de courses */}
+        {/* === Liste de courses === */}
         <Card>
           <CardHeader>
             <CardTitle>
@@ -568,11 +570,11 @@ const MealPlanner: React.FC = () => {
         </Card>
       </div>
 
-      {/* Section Recettes */}
+      {/* === Section Recettes === */}
       <Card className="mt-4">
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
-            Ingrédients
+            Recettes
             <Button onClick={() => {
               setEditingRecipe(null);
               setFormData({
@@ -619,7 +621,6 @@ const MealPlanner: React.FC = () => {
                     Servi : {recipe.tags.join(' et ')}
                   </div>
                   
-                  {/* Ingrédients */}
                   <div className="mb-4">
                     <h4 className="font-medium mb-2">Ingrédients :</h4>
                     {recipe.ingredients.map((ingredient, idx) => (
@@ -629,7 +630,6 @@ const MealPlanner: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* Instructions */}
                   {recipe.instructions && recipe.instructions.length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2">Préparation :</h4>
@@ -650,7 +650,6 @@ const MealPlanner: React.FC = () => {
       </Card>
 
       {/* Dialog pour édition/création de recette */}
- // Remplacez la partie Dialog de votre MealPlanner par ce code :
 
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
