@@ -20,8 +20,8 @@ const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
 >(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay className="fixed inset-0 z-50 bg-black/50 transition-opacity animate-in fade-in" />
+  <DialogPrimitive.Portal>
+    <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 transition-opacity animate-in fade-in" />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
@@ -32,7 +32,7 @@ const DialogContent = React.forwardRef<
     >
       {children}
     </DialogPrimitive.Content>
-  </DialogPortal>
+  </DialogPrimitive.Portal>
 ))
 DialogContent.displayName = "DialogContent"
 
