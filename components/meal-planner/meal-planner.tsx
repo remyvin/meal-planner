@@ -148,18 +148,6 @@ const MealComponent: React.FC<MealComponentProps> = ({
     setLocalSearchQuery("");
     setIsOpen(false);
   };
-  
-   const handleRemoveMeal = async () => {
-    try {
-      const response = await fetch('/api/weekly-plan', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          day,
-          midiId: period === 'midi' ? null : weeklyPlan[day].midi?.id,
-          soirId: period === 'soir' ? null : weeklyPlan[day].soir?.id,
-        }),
-      });
 
       if (!response.ok) throw new Error('Erreur lors de la suppression');
 
