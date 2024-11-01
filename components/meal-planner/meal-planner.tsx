@@ -148,21 +148,8 @@ const MealComponent: React.FC<MealComponentProps> = ({
     setLocalSearchQuery("");
     setIsOpen(false);
   };
-
-      if (!response.ok) throw new Error('Erreur lors de la suppression');
-
-      setWeeklyPlan(prev => ({
-        ...prev,
-        [day]: {
-          ...prev[day],
-          [period]: null
-        }
-      }));
-    } catch (error) {
-      console.error('Erreur lors de la suppression du repas:', error);
-      alert('Erreur lors de la suppression du repas');
-    }
-  };
+  
+ 
 
   return (
     <div className="flex items-center justify-between p-2 border rounded bg-white">
