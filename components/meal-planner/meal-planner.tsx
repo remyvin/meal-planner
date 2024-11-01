@@ -51,6 +51,7 @@ interface MealComponentProps {
   day: DayOfWeek;
   period: MealTime;
   meal: Recipe | null;
+  weeklyPlan: WeeklyPlan;  // Ajout de cette prop
   setWeeklyPlan: React.Dispatch<React.SetStateAction<WeeklyPlan>>;
   recipes: Recipe[];
 }
@@ -70,7 +71,44 @@ const CATEGORIES = {
 const DAYS: DayOfWeek[] = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
 // MealComponent
-const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWeeklyPlan, recipes }) => {
+const MealComponent: React.FC<MealComponentProps> = ({ 
+  day, 
+  period, 
+  meal, 
+  weeklyPlan,  // Ajout ici
+  setWeeklyPlan, 
+  recipes 
+}) => {
+  const [localSearchQuery, setLocalSearchQuery] = useState<string>("");
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleRemoveMeal = async () => {
+    try {
+      const response = await fetch('/api/weekly-plan', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          day,
+          midiId: period === 'midi' ? null : weeklyPlan[day].midi?.id,
+          soirId: period === 'soir' ? null : weeklyPlan[day].soir?.id,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Erreur lors de la suppression');
+
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [day]: {
+          ...prev[day],
+          [period]: null
+        }
+      }));
+    } catch (error) {
+      console.error('Erreur lors de la suppression du repas:', error);
+      alert('Erreur lors de la suppression du repas');
+    }
+  };
   const [localSearchQuery, setLocalSearchQuery] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -529,6 +567,7 @@ export default function MealPlanner() {
                     day={day}
                     period="midi" 
                     meal={weeklyPlan[day].midi}
+					weeklyPlan={weeklyPlan}  // Ajout de cette prop
                     setWeeklyPlan={setWeeklyPlan}
                     recipes={recipes}
                   />
@@ -536,6 +575,7 @@ export default function MealPlanner() {
                     day={day}
                     period="soir" 
                     meal={weeklyPlan[day].soir}
+					weeklyPlan={weeklyPlan}  // Ajout de cette prop
                     setWeeklyPlan={setWeeklyPlan}
                     recipes={recipes}
                   />
