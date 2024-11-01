@@ -74,6 +74,7 @@ const CATEGORIES = {
 
 export default function MealPlanner() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan[]>([]);
   const [loading, setLoading] = useState(true);
 
 const DAYS: DayOfWeek[] = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
@@ -130,21 +131,6 @@ const defaultRecipes: Recipe[] = [
   }
 ];
 
-useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const response = await fetch('/api/recipes');
-        const data = await response.json();
-        setRecipes(data);
-      } catch (error) {
-        console.error('Erreur lors du chargement des recettes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRecipes();
-  }, []);
 
   const handleAddRecipe = async (formData: any) => {
     try {
@@ -179,6 +165,71 @@ const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWee
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+
+ // Charger les données initiales
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Charger les recettes
+        const recipesResponse = await fetch('/api/recipes');
+        const recipesData = await recipesResponse.json();
+        setRecipes(recipesData);
+
+        // Charger le planning
+        const planResponse = await fetch('/api/weekly-plan');
+        const planData = await planResponse.json();
+        setWeeklyPlan(planData);
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Ajouter une nouvelle recette
+  const handleAddRecipe = async (formData: any) => {
+    try {
+      const response = await fetch('/api/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      const newRecipe = await response.json();
+      setRecipes([...recipes, newRecipe]);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de la recette:', error);
+    }
+  };
+
+  // Mettre à jour le planning
+  const updateWeeklyPlan = async (day: string, mealTime: 'midi' | 'soir', recipeId: number | null) => {
+    try {
+      const currentPlan = weeklyPlan.find(p => p.day === day);
+      const update = {
+        day,
+        midiId: mealTime === 'midi' ? recipeId : currentPlan?.midiId,
+        soirId: mealTime === 'soir' ? recipeId : currentPlan?.soirId,
+      };
+
+      const response = await fetch('/api/weekly-plan', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(update),
+      });
+
+      const updatedPlan = await response.json();
+      setWeeklyPlan(weeklyPlan.map(p => 
+        p.day === day ? updatedPlan : p
+      ));
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du planning:', error);
+    }
+  };
+  
+  
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {

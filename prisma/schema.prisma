@@ -1,21 +1,24 @@
-// prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Recipe {
   id           Int          @id @default(autoincrement())
   name         String
-  tags         String[]    // ['midi', 'soir']
+  tags         String[]
   ingredients  Ingredient[]
   instructions String[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  // Ajout des relations inverses
+  midiPlans    WeeklyPlan[] @relation("MidiRecipe")
+  soirPlans    WeeklyPlan[] @relation("SoirRecipe")
 }
 
 model Ingredient {
@@ -30,7 +33,7 @@ model Ingredient {
 
 model WeeklyPlan {
   id        Int      @id @default(autoincrement())
-  day       String   // 'lundi', 'mardi', etc.
+  day       String
   midiId    Int?
   soirId    Int?
   midi      Recipe?  @relation("MidiRecipe", fields: [midiId], references: [id])
