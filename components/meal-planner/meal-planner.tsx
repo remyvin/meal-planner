@@ -1,6 +1,5 @@
 'use client';
 
-// ------------ IMPORTS ------------
 import React, { useState, useRef, useEffect } from 'react';
 import { Sun, Moon, ShoppingBag, RefreshCw, Search, Plus, Edit, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,11 +19,7 @@ import {
   ModalTitle,
 } from "@/components/ui/modal";
 
-
-import { useEffect, useState } from 'react';
-import type { Recipe } from '@prisma/client';
-
-// ------------ TYPES ------------
+// Types
 type DayOfWeek = 'lundi' | 'mardi' | 'mercredi' | 'jeudi' | 'vendredi' | 'samedi' | 'dimanche';
 type MealTime = 'midi' | 'soir';
 
@@ -62,7 +57,7 @@ interface MealComponentProps {
 
 type FormData = Omit<Recipe, 'id'>;
 
-// ------------ CONSTANTES ------------
+// Constants
 const CATEGORIES = {
   LEGUMES: "Légumes",
   VIANDES: "Viandes",
@@ -72,164 +67,14 @@ const CATEGORIES = {
   AUTRES: "Autres"
 } as const;
 
-export default function MealPlanner() {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan[]>([]);
-  const [loading, setLoading] = useState(true);
-
 const DAYS: DayOfWeek[] = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-const MEAL_TIMES: MealTime[] = ['midi', 'soir'];
 
-// ------------ RECETTES PAR DÉFAUT ------------
-const defaultRecipes: Recipe[] = [
-  {
-    id: 1,
-    name: "Pâtes à la Carbonara",
-    ingredients: [
-      { name: "Pâtes", quantity: 100, unit: "g", category: CATEGORIES.FECULENTS },
-      { name: "Lardons", quantity: 150, unit: "g", category: CATEGORIES.VIANDES },
-      { name: "Oeufs", quantity: 2, unit: "pièces", category: CATEGORIES.FRAIS },
-    ],
-    tags: ['midi', 'soir'] as MealTime[],
-    instructions: [
-      "Faire bouillir l'eau pour les pâtes",
-      "Faire revenir les lardons",
-      "Cuire les pâtes al dente",
-      "Mélanger les œufs battus avec les pâtes et les lardons"
-    ]
-  },
-  {
-    id: 2,
-    name: "Poulet Rôti",
-    ingredients: [
-      { name: "Poulet", quantity: 200, unit: "g", category: CATEGORIES.VIANDES },
-      { name: "Carottes", quantity: 150, unit: "g", category: CATEGORIES.LEGUMES },
-    ],
-    tags: ['midi'] as MealTime[],
-    instructions: [
-      "Préchauffer le four à 180°C",
-      "Préparer le poulet",
-      "Ajouter les carottes autour",
-      "Cuire pendant 45 minutes"
-    ]
-  },
-  {
-    id: 3,
-    name: "Soupe de Légumes",
-    ingredients: [
-      { name: "Carottes", quantity: 100, unit: "g", category: CATEGORIES.LEGUMES },
-      { name: "Poireaux", quantity: 100, unit: "g", category: CATEGORIES.LEGUMES },
-      { name: "Pommes de terre", quantity: 100, unit: "g", category: CATEGORIES.FECULENTS },
-    ],
-    tags: ['soir'] as MealTime[],
-    instructions: [
-      "Éplucher et couper les légumes",
-      "Faire revenir les légumes",
-      "Ajouter de l'eau",
-      "Laisser mijoter 30 minutes"
-    ]
-  }
-];
-
-
-  const handleAddRecipe = async (formData: any) => {
-    try {
-      const response = await fetch('/api/recipes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      const newRecipe = await response.json();
-      setRecipes([...recipes, newRecipe]);
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout de la recette:', error);
-    }
-  };
-
-// État initial du planning
-const INITIAL_WEEKLY_PLAN: WeeklyPlan = {
-  lundi: { midi: null, soir: null },
-  mardi: { midi: null, soir: null },
-  mercredi: { midi: null, soir: null },
-  jeudi: { midi: null, soir: null },
-  vendredi: { midi: null, soir: null },
-  samedi: { midi: null, soir: null },
-  dimanche: { midi: null, soir: null }
-};
-
-// ------------ COMPOSANT REPAS ------------
+// MealComponent
 const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWeeklyPlan, recipes }) => {
   const [localSearchQuery, setLocalSearchQuery] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-
- // Charger les données initiales
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Charger les recettes
-        const recipesResponse = await fetch('/api/recipes');
-        const recipesData = await recipesResponse.json();
-        setRecipes(recipesData);
-
-        // Charger le planning
-        const planResponse = await fetch('/api/weekly-plan');
-        const planData = await planResponse.json();
-        setWeeklyPlan(planData);
-      } catch (error) {
-        console.error('Erreur lors du chargement des données:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Ajouter une nouvelle recette
-  const handleAddRecipe = async (formData: any) => {
-    try {
-      const response = await fetch('/api/recipes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      const newRecipe = await response.json();
-      setRecipes([...recipes, newRecipe]);
-    } catch (error) {
-      console.error('Erreur lors de l\'ajout de la recette:', error);
-    }
-  };
-
-  // Mettre à jour le planning
-  const updateWeeklyPlan = async (day: string, mealTime: 'midi' | 'soir', recipeId: number | null) => {
-    try {
-      const currentPlan = weeklyPlan.find(p => p.day === day);
-      const update = {
-        day,
-        midiId: mealTime === 'midi' ? recipeId : currentPlan?.midiId,
-        soirId: mealTime === 'soir' ? recipeId : currentPlan?.soirId,
-      };
-
-      const response = await fetch('/api/weekly-plan', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(update),
-      });
-
-      const updatedPlan = await response.json();
-      setWeeklyPlan(weeklyPlan.map(p => 
-        p.day === day ? updatedPlan : p
-      ));
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour du planning:', error);
-    }
-  };
-  
-  
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
@@ -245,6 +90,28 @@ const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWee
       recipe.tags.includes(period) && 
       recipe.name.toLowerCase().includes(query.toLowerCase())
     );
+  };
+
+  const handleSelectMeal = async (recipe: Recipe) => {
+    try {
+      await fetch('/api/weekly-plan', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          day,
+          [period === 'midi' ? 'midiId' : 'soirId']: recipe.id
+        }),
+      });
+
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [day]: { ...prev[day], [period]: recipe }
+      }));
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour du planning:', error);
+    }
+    setLocalSearchQuery("");
+    setIsOpen(false);
   };
 
   return (
@@ -271,22 +138,15 @@ const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWee
                 placeholder="Rechercher..."
                 className="w-full p-2 border rounded mb-2"
                 value={localSearchQuery}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocalSearchQuery(e.target.value)}
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                onKeyDown={(e: React.KeyboardEvent) => e.stopPropagation()}
+                onChange={(e) => setLocalSearchQuery(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
               />
             </div>
             {getFilteredRecipes(period, localSearchQuery).map(recipe => (
               <DropdownMenuItem
                 key={recipe.id}
-                onClick={() => {
-                  setWeeklyPlan(prev => ({
-                    ...prev,
-                    [day]: { ...prev[day], [period]: recipe }
-                  }));
-                  setLocalSearchQuery("");
-                  setIsOpen(false);
-                }}
+                onClick={() => handleSelectMeal(recipe)}
                 className="cursor-pointer hover:bg-slate-100"
               >
                 {recipe.name}
@@ -299,11 +159,24 @@ const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWee
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              setWeeklyPlan(prev => ({
-                ...prev,
-                [day]: { ...prev[day], [period]: null }
-              }));
+            onClick={async () => {
+              try {
+                await fetch('/api/weekly-plan', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    day,
+                    [period === 'midi' ? 'midiId' : 'soirId']: null
+                  }),
+                });
+
+                setWeeklyPlan(prev => ({
+                  ...prev,
+                  [day]: { ...prev[day], [period]: null }
+                }));
+              } catch (error) {
+                console.error('Erreur lors de la suppression du repas:', error);
+              }
             }}
           >
             <X className="w-4 h-4" />
@@ -314,11 +187,16 @@ const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWee
   );
 };
 
-// ------------ COMPOSANT PRINCIPAL ------------
-const MealPlanner: React.FC = () => {
+// Main Component
+export default function MealPlanner() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>(INITIAL_WEEKLY_PLAN);
-  const [recipes, setRecipes] = useState<Recipe[]>(defaultRecipes);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>(
+    DAYS.reduce((acc, day) => ({
+      ...acc,
+      [day]: { midi: null, soir: null }
+    }), {} as WeeklyPlan)
+  );
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [formData, setFormData] = useState<FormData>({
@@ -327,7 +205,7 @@ const MealPlanner: React.FC = () => {
     tags: [],
     instructions: []
   });
-  
+
   // Formatage des unités
   const formatUnit = (quantity: number, unit: string): string => {
     if (unit === 'pièces' || unit === 'pièce') {
@@ -338,47 +216,40 @@ const MealPlanner: React.FC = () => {
 
   // Chargement initial des données
   useEffect(() => {
-    const loadData = (): void => {
+    const loadData = async () => {
       try {
-        const savedRecipes = localStorage.getItem('recipes');
-        if (savedRecipes) {
-          setRecipes(JSON.parse(savedRecipes));
-        }
+        // Charger les recettes
+        const recipesResponse = await fetch('/api/recipes');
+        const recipesData = await recipesResponse.json();
+        setRecipes(recipesData);
 
-        const savedPlan = localStorage.getItem('weeklyPlan');
-        if (savedPlan) {
-          setWeeklyPlan(JSON.parse(savedPlan));
-        }
-      } catch (e) {
-        console.error('Erreur lors du chargement des données:', e);
+        // Charger le planning
+        const planResponse = await fetch('/api/weekly-plan');
+        const planData = await planResponse.json();
+        
+        // Convertir planData en format WeeklyPlan
+        const formattedPlan = DAYS.reduce((acc, day) => {
+          const dayPlan = planData.find((p: any) => p.day === day) || { midi: null, soir: null };
+          acc[day] = {
+            midi: dayPlan.midi || null,
+            soir: dayPlan.soir || null
+          };
+          return acc;
+        }, {} as WeeklyPlan);
+
+        setWeeklyPlan(formattedPlan);
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
       }
       setIsLoading(false);
     };
 
-    if (typeof window !== 'undefined') {
-      loadData();
-    }
+    loadData();
   }, []);
 
-  // Sauvegarde des données
-  useEffect(() => {
-    const saveData = (): void => {
-      try {
-        localStorage.setItem('recipes', JSON.stringify(recipes));
-        localStorage.setItem('weeklyPlan', JSON.stringify(weeklyPlan));
-      } catch (e) {
-        console.error('Erreur lors de la sauvegarde des données:', e);
-      }
-    };
-
-    if (!isLoading && typeof window !== 'undefined') {
-      saveData();
-    }
-  }, [recipes, weeklyPlan, isLoading]);
-
   // Génération du planning
-  const generateWeeklyPlan = (): void => {
-    const newPlan: WeeklyPlan = { ...INITIAL_WEEKLY_PLAN };
+  const generateWeeklyPlan = async () => {
+    const newPlan = { ...weeklyPlan };
     
     DAYS.forEach((day) => {
       const midiRecipes = recipes.filter(r => r.tags.includes('midi'));
@@ -389,6 +260,23 @@ const MealPlanner: React.FC = () => {
         soir: soirRecipes.length > 0 ? soirRecipes[Math.floor(Math.random() * soirRecipes.length)] : null
       };
     });
+
+    // Mettre à jour la base de données
+    for (const day of DAYS) {
+      try {
+        await fetch('/api/weekly-plan', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            day,
+            midiId: newPlan[day].midi?.id || null,
+            soirId: newPlan[day].soir?.id || null
+          }),
+        });
+      } catch (error) {
+        console.error(`Erreur lors de la mise à jour du planning pour ${day}:`, error);
+      }
+    }
 
     setWeeklyPlan(newPlan);
   };
@@ -448,8 +336,7 @@ const MealPlanner: React.FC = () => {
       exportText += `| ${capitalizedDay.padEnd(10)} | ${midiName} | ${soirName} |\n`;
       exportText += tableLine();
     });
-	
-	// Suite de exportPlanningAndGroceries
+
     exportText += "\nLISTE DE COURSES\n";
     exportText += createLine('=', 50) + '\n';
     
@@ -499,7 +386,7 @@ const MealPlanner: React.FC = () => {
   };
 
   // Gestion des recettes
-  const handleSubmit = (): void => {
+  const handleSubmit = async (): Promise<void> => {
     if (formData.name.trim() === "") {
       alert("Le nom de la recette est obligatoire");
       return;
@@ -512,37 +399,55 @@ const MealPlanner: React.FC = () => {
       alert("Tous les ingrédients doivent avoir un nom");
       return;
     }
-
-    if (editingRecipe) {
-      setRecipes(recipes.map(r => 
-        r.id === editingRecipe.id ? { ...formData, id: editingRecipe.id } : r
-      ));
-      
-      setWeeklyPlan(prev => {
-        const newPlan = { ...prev };
-        DAYS.forEach((day) => {
-          if (newPlan[day].midi?.id === editingRecipe.id) {
-            newPlan[day].midi = { ...formData, id: editingRecipe.id };
-          }
-          if (newPlan[day].soir?.id === editingRecipe.id) {
-            newPlan[day].soir = { ...formData, id: editingRecipe.id };
-          }
+	
+// Suite de handleSubmit...
+    try {
+      if (editingRecipe) {
+        // Mise à jour d'une recette existante
+        const response = await fetch(`/api/recipes/${editingRecipe.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
         });
-        return newPlan;
-      });
-    } else {
-      const newId = Math.max(0, ...recipes.map(r => r.id)) + 1;
-      setRecipes([...recipes, { ...formData, id: newId }]);
-    }
+        const updatedRecipe = await response.json();
+        setRecipes(recipes.map(r => r.id === editingRecipe.id ? updatedRecipe : r));
+        
+        // Mise à jour du planning si la recette est utilisée
+        setWeeklyPlan(prev => {
+          const newPlan = { ...prev };
+          DAYS.forEach((day) => {
+            if (newPlan[day].midi?.id === editingRecipe.id) {
+              newPlan[day].midi = updatedRecipe;
+            }
+            if (newPlan[day].soir?.id === editingRecipe.id) {
+              newPlan[day].soir = updatedRecipe;
+            }
+          });
+          return newPlan;
+        });
+      } else {
+        // Création d'une nouvelle recette
+        const response = await fetch('/api/recipes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        });
+        const newRecipe = await response.json();
+        setRecipes([...recipes, newRecipe]);
+      }
 
-    setShowEditModal(false);
-    setEditingRecipe(null);
-    setFormData({
-      name: "",
-      ingredients: [{ name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }],
-      tags: [],
-      instructions: []
-    });
+      setShowEditModal(false);
+      setEditingRecipe(null);
+      setFormData({
+        name: "",
+        ingredients: [{ name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }],
+        tags: [],
+        instructions: []
+      });
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde de la recette:', error);
+      alert('Erreur lors de la sauvegarde de la recette');
+    }
   };
 
   const handleEdit = (recipe: Recipe): void => {
@@ -556,25 +461,35 @@ const MealPlanner: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleDeleteRecipe = (recipeId: number): void => {
+  const handleDeleteRecipe = async (recipeId: number): Promise<void> => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette recette ?')) {
       return;
     }
 
-    setRecipes(recipes.filter(r => r.id !== recipeId));
-    
-    setWeeklyPlan(prev => {
-      const newPlan = { ...prev };
-      DAYS.forEach((day) => {
-        if (newPlan[day].midi?.id === recipeId) {
-          newPlan[day].midi = null;
-        }
-        if (newPlan[day].soir?.id === recipeId) {
-          newPlan[day].soir = null;
-        }
+    try {
+      await fetch(`/api/recipes/${recipeId}`, {
+        method: 'DELETE',
       });
-      return newPlan;
-    });
+
+      setRecipes(recipes.filter(r => r.id !== recipeId));
+      
+      // Mise à jour du planning si la recette est utilisée
+      setWeeklyPlan(prev => {
+        const newPlan = { ...prev };
+        DAYS.forEach((day) => {
+          if (newPlan[day].midi?.id === recipeId) {
+            newPlan[day].midi = null;
+          }
+          if (newPlan[day].soir?.id === recipeId) {
+            newPlan[day].soir = null;
+          }
+        });
+        return newPlan;
+      });
+    } catch (error) {
+      console.error('Erreur lors de la suppression de la recette:', error);
+      alert('Erreur lors de la suppression de la recette');
+    }
   };
   
   // Loading screen
@@ -587,8 +502,6 @@ const MealPlanner: React.FC = () => {
   }
 
   // Rendu principal
-  // Remplacez la section des commentaires dans le rendu principal par :
-
   return (
     <div className="p-4 max-w-6xl mx-auto">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -741,7 +654,6 @@ const MealPlanner: React.FC = () => {
       </Card>
 
       {/* Modal pour édition/création de recette */}
-
       <Modal open={showEditModal} onOpenChange={setShowEditModal}>
         <ModalContent>
           <ModalHeader>
@@ -759,8 +671,7 @@ const MealPlanner: React.FC = () => {
                   placeholder="Nom de la recette"
                   className="w-full p-2 border rounded"
                   value={formData.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                    setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
 
@@ -769,7 +680,7 @@ const MealPlanner: React.FC = () => {
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={formData.tags.includes('midi')}
-                    onCheckedChange={(checked: boolean) => {
+                    onCheckedChange={(checked) => {
                       setFormData(prev => ({
                         ...prev,
                         tags: checked 
@@ -783,7 +694,7 @@ const MealPlanner: React.FC = () => {
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={formData.tags.includes('soir')}
-                    onCheckedChange={(checked: boolean) => {
+                    onCheckedChange={(checked) => {
                       setFormData(prev => ({
                         ...prev,
                         tags: checked 
@@ -799,13 +710,13 @@ const MealPlanner: React.FC = () => {
               {/* Liste des ingrédients */}
               <div className="space-y-2">
                 {formData.ingredients.map((ingredient, index) => (
-                  <div key={index} className="grid grid-cols-[1fr,auto,auto,auto,auto] gap-2">
+                  <div key={index} className="grid grid-cols-[2fr,1fr,1fr,1.5fr,auto] gap-2">
                     <input
                       type="text"
                       placeholder="Ingrédient"
                       className="p-2 border rounded"
                       value={ingredient.name}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      onChange={(e) => {
                         const newIngredients = [...formData.ingredients];
                         newIngredients[index].name = e.target.value;
                         setFormData({ ...formData, ingredients: newIngredients });
@@ -814,18 +725,18 @@ const MealPlanner: React.FC = () => {
                     <input
                       type="number"
                       placeholder="Quantité"
-                      className="w-24 p-2 border rounded"
+                      className="p-2 border rounded"
                       value={ingredient.quantity}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      onChange={(e) => {
                         const newIngredients = [...formData.ingredients];
                         newIngredients[index].quantity = Number(e.target.value);
                         setFormData({ ...formData, ingredients: newIngredients });
                       }}
                     />
                     <select
-                      className="w-24 p-2 border rounded"
+                      className="p-2 border rounded"
                       value={ingredient.unit}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                      onChange={(e) => {
                         const newIngredients = [...formData.ingredients];
                         newIngredients[index].unit = e.target.value;
                         setFormData({ ...formData, ingredients: newIngredients });
@@ -837,9 +748,9 @@ const MealPlanner: React.FC = () => {
                       <option value="pièces">pièces</option>
                     </select>
                     <select
-                      className="w-32 p-2 border rounded"
+                      className="p-2 border rounded"
                       value={ingredient.category}
-                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                      onChange={(e) => {
                         const newIngredients = [...formData.ingredients];
                         newIngredients[index].category = e.target.value;
                         setFormData({ ...formData, ingredients: newIngredients });
@@ -895,10 +806,11 @@ const MealPlanner: React.FC = () => {
                         placeholder={`Étape ${index + 1}`}
                         className="flex-1 p-2 border rounded-r"
                         value={instruction}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        onChange={(e) => {
                           const newInstructions = [...(formData.instructions || [])];
                           newInstructions[index] = e.target.value;
-                          setFormData(prev => ({ ...prev, instructions: newInstructions }));
+
+						setFormData(prev => ({ ...prev, instructions: newInstructions }));
                         }}
                       />
                       <Button
@@ -955,6 +867,4 @@ const MealPlanner: React.FC = () => {
       </Modal>
     </div>
   );
-};
-
-export default MealPlanner;
+}						  
