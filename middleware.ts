@@ -1,24 +1,34 @@
-// middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const isAuthed = request.cookies.has('auth');
-  const isAuthPage = request.nextUrl.pathname === '/auth';
-
-  // Si on est sur la page d'auth et qu'on est déjà authentifié
-  if (isAuthPage && isAuthed) {
-    return NextResponse.redirect(new URL('/', request.url));
+  // Forcer HTTPS
+  if (process.env.NODE_ENV === 'production' && !request.url.startsWith('https://')) {
+    return NextResponse.redirect(
+      `https://${request.nextUrl.host}${request.nextUrl.pathname}`,
+      301
+    )
   }
 
-  // Si on n'est pas authentifié et qu'on n'est pas sur la page d'auth
-  if (!isAuthed && !isAuthPage) {
-    return NextResponse.redirect(new URL('/auth', request.url));
+  // Vérification d'authentification existante
+  const authToken = request.cookies.get('auth-token')
+  
+  if (request.nextUrl.pathname === '/auth') {
+    if (authToken) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+    return NextResponse.next()
   }
 
-  return NextResponse.next();
+  if (!authToken) {
+    return NextResponse.redirect(new URL('/auth', request.url))
+  }
+
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
-};
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
+}

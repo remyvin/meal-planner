@@ -1,26 +1,20 @@
 // app/api/auth/route.ts
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
     const { password } = await request.json();
-    const correctPassword = process.env.ACCESS_PASSWORD || 'votre-mot-de-passe';
+    const correctPassword = process.env.ACCESS_PASSWORD;
 
     if (password === correctPassword) {
-      // Créer la réponse
-      const response = NextResponse.json({ 
-        success: true,
-        message: 'Authentification réussie'
-      });
-
-      // Définir le cookie avec des options plus permissives
+      const response = NextResponse.json({ success: true });
+      
       response.cookies.set({
         name: 'auth-token',
         value: 'authenticated',
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: true, // Force HTTPS
+        sameSite: 'strict',
         maxAge: 60 * 60 * 24 * 7, // 7 jours
         path: '/',
       });
@@ -33,7 +27,6 @@ export async function POST(request: Request) {
       { status: 401 }
     );
   } catch (error) {
-    console.error('Erreur d\'authentification:', error);
     return NextResponse.json(
       { success: false, message: 'Erreur serveur' },
       { status: 500 }
