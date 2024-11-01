@@ -1,6 +1,7 @@
-// app/api/recipes/[id]/route.ts
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 
 export async function PUT(
   request: Request,
@@ -8,32 +9,37 @@ export async function PUT(
 ) {
   try {
     const id = parseInt(params.id)
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: 'Invalid ID format' },
+        { status: 400 }
+      )
+    }
+
     const body = await request.json()
 
-    // Supprimer les anciens ingrédients
-    await prisma.ingredient.deleteMany({
-      where: { recipeId: id },
-    })
+    // Utilisation de transaction pour éviter les états inconsistants
+    const recipe = await prisma.$transaction(async (tx) => {
+      // Supprimer les anciens ingrédients
+      await tx.ingredient.deleteMany({
+        where: { recipeId: id },
+      })
 
-    // Mettre à jour la recette avec les nouveaux ingrédients
-    const recipe = await prisma.recipe.update({
-      where: { id },
-      data: {
-        name: body.name,
-        tags: body.tags,
-        instructions: body.instructions,
-        ingredients: {
-          create: body.ingredients.map((ing: any) => ({
-            name: ing.name,
-            quantity: ing.quantity,
-            unit: ing.unit,
-            category: ing.category,
-          })),
+      // Mettre à jour la recette
+      return tx.recipe.update({
+        where: { id },
+        data: {
+          name: body.name,
+          tags: body.tags,
+          instructions: body.instructions,
+          ingredients: {
+            create: body.ingredients,
+          },
         },
-      },
-      include: {
-        ingredients: true,
-      },
+        include: {
+          ingredients: true,
+        },
+      })
     })
 
     return NextResponse.json(recipe)
@@ -52,15 +58,21 @@ export async function DELETE(
 ) {
   try {
     const id = parseInt(params.id)
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { error: 'Invalid ID format' },
+        { status: 400 }
+      )
+    }
 
-    // Supprimer d'abord les ingrédients
-    await prisma.ingredient.deleteMany({
-      where: { recipeId: id },
-    })
-
-    // Ensuite supprimer la recette
-    await prisma.recipe.delete({
-      where: { id },
+    // Utilisation de transaction
+    await prisma.$transaction(async (tx) => {
+      await tx.ingredient.deleteMany({
+        where: { recipeId: id },
+      })
+      await tx.recipe.delete({
+        where: { id },
+      })
     })
 
     return NextResponse.json({ success: true })

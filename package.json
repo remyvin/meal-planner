@@ -1,12 +1,10 @@
 {
-  "name": "mon-planificateur",
-  "version": "0.1.0",
-  "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.21.1",
@@ -20,10 +18,12 @@
     "next": "14.0.3",
     "prisma": "^5.21.1",
     "react": "^18",
+	"@prisma/client": "5.21.1",
     "react-dom": "^18",
     "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
+	"prisma": "5.21.1",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
