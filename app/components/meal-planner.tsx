@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/modal";
 
 // ------------ TYPES ------------
 type DayOfWeek = 'lundi' | 'mardi' | 'mercredi' | 'jeudi' | 'vendredi' | 'samedi' | 'dimanche';
@@ -228,7 +228,7 @@ const MealPlanner: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>(INITIAL_WEEKLY_PLAN);
   const [recipes, setRecipes] = useState<Recipe[]>(defaultRecipes);
-  const [showEditDialog, setShowEditDialog] = useState<boolean>(false);
+  const [showEditmodal, setShowEditmodal] = useState<boolean>(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -444,7 +444,7 @@ const MealPlanner: React.FC = () => {
       setRecipes([...recipes, { ...formData, id: newId }]);
     }
 
-    setShowEditDialog(false);
+    setShowEditmodal(false);
     setEditingRecipe(null);
     setFormData({
       name: "",
@@ -462,7 +462,7 @@ const MealPlanner: React.FC = () => {
       tags: [...recipe.tags],
       instructions: [...(recipe.instructions || [])]
     });
-    setShowEditDialog(true);
+    setShowEditmodal(true);
   };
 
   const handleDeleteRecipe = (recipeId: number): void => {
@@ -583,7 +583,7 @@ const MealPlanner: React.FC = () => {
                 tags: [],
                 instructions: []
               });
-              setShowEditDialog(true);
+              setShowEditmodal(true);
             }}>
               <Plus className="w-4 h-4 mr-2" />
               Nouvelle recette
@@ -649,15 +649,15 @@ const MealPlanner: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Dialog pour édition/création de recette */}
+      {/* modal pour édition/création de recette */}
 
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
+      <modal open={showEditmodal} onOpenChange={setShowEditmodal}>
+        <modalContent>
+          <modalHeader>
+            <modalTitle>
               {editingRecipe ? 'Modifier la recette' : 'Nouvelle recette'}
-            </DialogTitle>
-          </DialogHeader>
+            </modalTitle>
+          </modalHeader>
           
           <div className="grid gap-4 py-4">
             <div className="space-y-4">
@@ -844,7 +844,7 @@ const MealPlanner: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => {
-                setShowEditDialog(false);
+                setShowEditmodal(false);
                 setEditingRecipe(null);
                 setFormData({
                   name: "",
@@ -860,8 +860,8 @@ const MealPlanner: React.FC = () => {
               {editingRecipe ? 'Modifier' : 'Ajouter'}
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </modalContent>
+      </modal>
     </div>
   );
 };
