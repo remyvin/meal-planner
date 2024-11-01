@@ -3,15 +3,18 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   // Forcer HTTPS
-  if (process.env.NODE_ENV === 'production' && !request.url.startsWith('https://')) {
+  if (
+    process.env.NODE_ENV === 'production' && 
+    !request.headers.get('x-forwarded-proto')?.includes('https')
+  ) {
     return NextResponse.redirect(
-      `https://${request.nextUrl.host}${request.nextUrl.pathname}`,
+      `https://${request.headers.get('host')}${request.nextUrl.pathname}`,
       301
     )
   }
 
   // Vérification d'authentification existante
-  const authToken = request.cookies.get('auth-token')
+const authToken = request.cookies.get('auth-token')
   
   if (request.nextUrl.pathname === '/auth') {
     if (authToken) {
@@ -29,6 +32,13 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    /*
+     * Match all request paths except:
+     * 1. /api routes
+     * 2. /_next (Next.js internals)
+     * 3. /_static (inside /public)
+     * 4. all root files inside /public (e.g. /favicon.ico)
+     */
+    '/((?!api|_next|_static|_vercel|[\\w-]+\\.\\w+).*)',
   ],
 }
