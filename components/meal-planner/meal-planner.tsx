@@ -113,6 +113,71 @@ const MealComponent: React.FC<MealComponentProps> = ({ day, period, meal, setWee
     setLocalSearchQuery("");
     setIsOpen(false);
   };
+  
+   const handleRemoveMeal = async () => {
+    try {
+      const response = await fetch('/api/weekly-plan', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          day,
+          midiId: period === 'midi' ? null : weeklyPlan[day].midi?.id,
+          soirId: period === 'soir' ? null : weeklyPlan[day].soir?.id,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Erreur lors de la suppression');
+
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [day]: {
+          ...prev[day],
+          [period]: null
+        }
+      }));
+    } catch (error) {
+      console.error('Erreur lors de la suppression du repas:', error);
+      alert('Erreur lors de la suppression du repas');
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between p-2 border rounded bg-white">
+      <div className="flex items-center gap-2">
+        {period === 'midi' ? 
+          <Sun className="w-4 h-4 text-yellow-500" /> : 
+          <Moon className="w-4 h-4 text-blue-500" />
+        }
+        <span className="text-gray-800">{meal?.name || 'Pas de repas'}</span>
+      </div>
+      <div className="flex gap-2">
+        <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="bg-white hover:bg-gray-100 border-gray-300"
+            >
+              <Search className="w-4 h-4 text-gray-600" />
+            </Button>
+          </DropdownMenuTrigger>
+          {/* ... reste du dropdown ... */}
+        </DropdownMenu>
+
+        {meal && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRemoveMeal}
+            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
 
   return (
     <div className="flex items-center justify-between p-2 border rounded">
@@ -248,10 +313,12 @@ export default function MealPlanner() {
   }, []);
 
   // Génération du planning
-  const generateWeeklyPlan = async () => {
+ const generateWeeklyPlan = async () => {
+  try {
     const newPlan = { ...weeklyPlan };
     
-    DAYS.forEach((day) => {
+    // Générer le nouveau planning
+    for (const day of DAYS) {
       const midiRecipes = recipes.filter(r => r.tags.includes('midi'));
       const soirRecipes = recipes.filter(r => r.tags.includes('soir'));
       
@@ -259,27 +326,26 @@ export default function MealPlanner() {
         midi: midiRecipes.length > 0 ? midiRecipes[Math.floor(Math.random() * midiRecipes.length)] : null,
         soir: soirRecipes.length > 0 ? soirRecipes[Math.floor(Math.random() * soirRecipes.length)] : null
       };
-    });
 
-    // Mettre à jour la base de données
-    for (const day of DAYS) {
-      try {
-        await fetch('/api/weekly-plan', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            day,
-            midiId: newPlan[day].midi?.id || null,
-            soirId: newPlan[day].soir?.id || null
-          }),
-        });
-      } catch (error) {
-        console.error(`Erreur lors de la mise à jour du planning pour ${day}:`, error);
-      }
+      // Mettre à jour dans la base de données
+      await fetch('/api/weekly-plan', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          day,
+          midiId: newPlan[day].midi?.id || null,
+          soirId: newPlan[day].soir?.id || null,
+        }),
+      });
     }
 
+    // Mettre à jour l'état local
     setWeeklyPlan(newPlan);
-  };
+  } catch (error) {
+    console.error('Erreur lors de la génération du planning:', error);
+    alert('Erreur lors de la génération du planning');
+  }
+};
 
   // Calcul de la liste de courses
   const calculateGroceryList = (): { [category: string]: Ingredient[] } => {

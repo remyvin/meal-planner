@@ -12,23 +12,7 @@ const nextConfig = {
           },
         ],
       },
-    ]
-  },
-  // Rediriger HTTP vers HTTPS
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [
-          {
-            type: 'host',
-            value: '(?!localhost).*',
-          }
-        ],
-        destination: 'https://:path*',
-        permanent: true,
-      },
-    ]
+    ];
   },
 }
 
