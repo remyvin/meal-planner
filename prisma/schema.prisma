@@ -1,0 +1,42 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Recipe {
+  id           Int          @id @default(autoincrement())
+  name         String
+  tags         String[]    // ['midi', 'soir']
+  ingredients  Ingredient[]
+  instructions String[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Ingredient {
+  id       Int      @id @default(autoincrement())
+  name     String
+  quantity Float
+  unit     String
+  category String
+  recipeId Int
+  recipe   Recipe   @relation(fields: [recipeId], references: [id])
+}
+
+model WeeklyPlan {
+  id        Int      @id @default(autoincrement())
+  day       String   // 'lundi', 'mardi', etc.
+  midiId    Int?
+  soirId    Int?
+  midi      Recipe?  @relation("MidiRecipe", fields: [midiId], references: [id])
+  soir      Recipe?  @relation("SoirRecipe", fields: [soirId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([day])
+}

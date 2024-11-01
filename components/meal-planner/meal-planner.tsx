@@ -20,6 +20,10 @@ import {
   ModalTitle,
 } from "@/components/ui/modal";
 
+
+import { useEffect, useState } from 'react';
+import type { Recipe } from '@prisma/client';
+
 // ------------ TYPES ------------
 type DayOfWeek = 'lundi' | 'mardi' | 'mercredi' | 'jeudi' | 'vendredi' | 'samedi' | 'dimanche';
 type MealTime = 'midi' | 'soir';
@@ -67,6 +71,10 @@ const CATEGORIES = {
   EPICERIE: "Épicerie",
   AUTRES: "Autres"
 } as const;
+
+export default function MealPlanner() {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
 
 const DAYS: DayOfWeek[] = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const MEAL_TIMES: MealTime[] = ['midi', 'soir'];
@@ -121,6 +129,38 @@ const defaultRecipes: Recipe[] = [
     ]
   }
 ];
+
+useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const response = await fetch('/api/recipes');
+        const data = await response.json();
+        setRecipes(data);
+      } catch (error) {
+        console.error('Erreur lors du chargement des recettes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipes();
+  }, []);
+
+  const handleAddRecipe = async (formData: any) => {
+    try {
+      const response = await fetch('/api/recipes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      const newRecipe = await response.json();
+      setRecipes([...recipes, newRecipe]);
+    } catch (error) {
+      console.error('Erreur lors de l\'ajout de la recette:', error);
+    }
+  };
 
 // État initial du planning
 const INITIAL_WEEKLY_PLAN: WeeklyPlan = {
