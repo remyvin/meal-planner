@@ -13,12 +13,12 @@ const ModalContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <DialogPrimitive.Portal>
     <DialogPrimitive.Overlay
-      className="fixed inset-0 z-50 bg-black/50"
+      className="fixed inset-0 z-[99] bg-black/50"
     />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-white p-6 shadow-lg sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-white p-6 shadow-lg sm:rounded-lg max-h-[90vh] overflow-y-auto",
         className
       )}
       {...props}
