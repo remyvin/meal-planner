@@ -109,9 +109,6 @@ const MealComponent: React.FC<MealComponentProps> = ({
       alert('Erreur lors de la suppression du repas');
     }
   };
-  const [localSearchQuery, setLocalSearchQuery] = useState<string>("");
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
