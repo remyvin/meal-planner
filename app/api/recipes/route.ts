@@ -1,35 +1,36 @@
 // app/api/recipes/route.ts
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
-// Récupérer toutes les recettes
+export const dynamic = 'force-dynamic' // important!
+
 export async function GET() {
   try {
     const recipes = await prisma.recipe.findMany({
       include: {
         ingredients: true,
       },
-    });
-    return NextResponse.json(recipes);
+    })
+    return NextResponse.json(recipes)
   } catch (error) {
+    console.error('Error fetching recipes:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la récupération des recettes' },
+      { error: 'Error fetching recipes' },
       { status: 500 }
-    );
+    )
   }
 }
 
-// Créer une nouvelle recette
 export async function POST(request: Request) {
   try {
-    const data = await request.json();
+    const body = await request.json()
     const recipe = await prisma.recipe.create({
       data: {
-        name: data.name,
-        tags: data.tags,
-        instructions: data.instructions || [],
+        name: body.name,
+        tags: body.tags,
+        instructions: body.instructions || [],
         ingredients: {
-          create: data.ingredients.map((ing: any) => ({
+          create: body.ingredients.map((ing: any) => ({
             name: ing.name,
             quantity: ing.quantity,
             unit: ing.unit,
@@ -40,12 +41,13 @@ export async function POST(request: Request) {
       include: {
         ingredients: true,
       },
-    });
-    return NextResponse.json(recipe);
+    })
+    return NextResponse.json(recipe)
   } catch (error) {
+    console.error('Error creating recipe:', error)
     return NextResponse.json(
-      { error: 'Erreur lors de la création de la recette' },
+      { error: 'Error creating recipe' },
       { status: 500 }
-    );
+    )
   }
 }
