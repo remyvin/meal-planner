@@ -18,7 +18,7 @@ import {
   ModalContent,
   ModalHeader,
   ModalTitle,
-} from "@/components/ui/modal";
+} from "@/app/components/ui/modal";
 
 // ------------ TYPES ------------
 type DayOfWeek = 'lundi' | 'mardi' | 'mercredi' | 'jeudi' | 'vendredi' | 'samedi' | 'dimanche';
