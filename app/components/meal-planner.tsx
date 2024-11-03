@@ -702,7 +702,7 @@ const MealPlanner = () => {
 
       {/* Dialog pour édition/création de recette */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-white animate-scale-in">
+        <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[90vh] overflow-y-auto bg-white animate-scale-in">
           <DialogHeader className="border-b pb-4">
             <DialogTitle className="text-xl font-semibold text-gray-800">
               {editingRecipe ? 'Modifier la recette' : 'Nouvelle recette'}
