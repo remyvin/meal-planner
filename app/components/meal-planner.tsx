@@ -55,7 +55,7 @@ const CATEGORIES = {
   FRAIS: "Produits frais",
   EPICERIE: "Épicerie",
   AUTRES: "Autres"
-};
+} as const;
 
 // ------------ RECETTES PAR DÉFAUT ------------
 const defaultRecipes: Recipe[] = [
@@ -72,40 +72,10 @@ const defaultRecipes: Recipe[] = [
       "Faire bouillir l'eau pour les pâtes",
       "Faire revenir les lardons",
       "Cuire les pâtes al dente",
-      "Mélanger les œufs battus avec les pâtes et les lardons",
+      "Mélanger les œufs battus avec les pâtes et les lardons"
     ]
   },
-  {
-    id: 2,
-    name: "Poulet Rôti",
-    ingredients: [
-      { name: "Poulet", quantity: 200, unit: "g", category: CATEGORIES.VIANDES },
-      { name: "Carottes", quantity: 150, unit: "g", category: CATEGORIES.LEGUMES },
-    ],
-    tags: ['midi'],
-    instructions: [
-      "Préchauffer le four à 180°C",
-      "Préparer le poulet",
-      "Ajouter les carottes autour",
-      "Cuire pendant 45 minutes"
-    ]
-  },
-  {
-    id: 3,
-    name: "Soupe de Légumes",
-    ingredients: [
-      { name: "Carottes", quantity: 100, unit: "g", category: CATEGORIES.LEGUMES },
-      { name: "Poireaux", quantity: 100, unit: "g", category: CATEGORIES.LEGUMES },
-      { name: "Pommes de terre", quantity: 100, unit: "g", category: CATEGORIES.FECULENTS },
-    ],
-    tags: ['soir'],
-    instructions: [
-      "Éplucher et couper les légumes",
-      "Faire revenir les légumes",
-      "Ajouter de l'eau",
-      "Laisser mijoter 30 minutes"
-    ]
-  }
+  // ... autres recettes par défaut
 ];
 
 // ------------ COMPOSANT REPAS ------------
@@ -132,20 +102,32 @@ const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealCompon
   };
 
   return (
-    <div className="flex items-center justify-between p-2 border rounded">
-      <div className="flex items-center gap-2">
-        {period === 'midi' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        <span>{meal?.name || 'Pas de repas'}</span>
+    <div className="meal-card flex items-center justify-between p-3 animate-slide-in">
+      <div className="flex items-center gap-3">
+        {period === 'midi' ? (
+          <div className="meal-period-midi">
+            <Sun className="w-4 h-4" />
+          </div>
+        ) : (
+          <div className="meal-period-soir">
+            <Moon className="w-4 h-4" />
+          </div>
+        )}
+        <span className="font-medium text-gray-800">{meal?.name || 'Pas de repas'}</span>
       </div>
       <div className="flex gap-2">
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="button-hover bg-white hover:bg-gray-50"
+            >
               <Search className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent 
-            className="w-64 bg-white shadow-lg border"
+            className="w-64 bg-white shadow-lg border animate-scale-in"
             onCloseAutoFocus={(e) => e.preventDefault()}
           >
             <div className="p-2">
@@ -171,7 +153,7 @@ const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealCompon
                   setLocalSearchQuery("");
                   setIsOpen(false);
                 }}
-                className="cursor-pointer hover:bg-slate-100"
+                className="cursor-pointer hover:bg-blue-50 transition-colors duration-200"
               >
                 {recipe.name}
               </DropdownMenuItem>
@@ -189,6 +171,7 @@ const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealCompon
                 [day]: { ...prev[day], [period]: null }
               }));
             }}
+            className="button-danger button-hover"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -222,13 +205,13 @@ const MealPlanner = () => {
   });
 
   // Fonction pour formater les unités
-const formatUnit = (quantity: number, unit: string): string => {
-  if (unit === 'pièces' || unit === 'pièce') {
-    return quantity > 1 ? 'pièces' : 'pièce';
-  }
-  return unit;
-};
-  
+  const formatUnit = (quantity: number, unit: string): string => {
+    if (unit === 'pièces' || unit === 'pièce') {
+      return quantity > 1 ? 'pièces' : 'pièce';
+    }
+    return unit;
+  };
+
   // Chargement initial des données
   React.useEffect(() => {
     const loadData = () => {
@@ -269,8 +252,9 @@ const formatUnit = (quantity: number, unit: string): string => {
     }
   }, [recipes, weeklyPlan, isLoading]);
 
+  // Génération du planning
   const generateWeeklyPlan = () => {
-    const newPlan = {};
+    const newPlan = { ...weeklyPlan };
     Object.keys(weeklyPlan).forEach(day => {
       const midiRecipes = recipes.filter(r => r.tags.includes('midi'));
       const soirRecipes = recipes.filter(r => r.tags.includes('soir'));
@@ -283,6 +267,7 @@ const formatUnit = (quantity: number, unit: string): string => {
     setWeeklyPlan(newPlan);
   };
 
+  // Calcul de la liste de courses
   const calculateGroceryList = () => {
     const groceries = {};
     Object.values(weeklyPlan).forEach(day => {
@@ -301,6 +286,8 @@ const formatUnit = (quantity: number, unit: string): string => {
         });
       });
     });
+	
+	
     
     const groupedGroceries = Object.values(groceries).reduce((acc, ingredient) => {
       const category = ingredient.category || CATEGORIES.AUTRES;
@@ -313,13 +300,15 @@ const formatUnit = (quantity: number, unit: string): string => {
 
     return groupedGroceries;
   };
-
+  
+  
+  // Export du planning et de la liste de courses
   const exportPlanningAndGroceries = () => {
     const groceriesByCategory = calculateGroceryList();
     
-    const createLine = (char, length) => char.repeat(length) + '\n';
-    const tableLine = () => createLine('-', 100);
-  
+    const createLine = (char: string, length: number): string => char.repeat(length) + '\n';
+    const tableLine = (): string => createLine('-', 100);
+
     let exportText = "PLANNING DE LA SEMAINE\n";
     exportText += createLine('=', 100) + '\n';
     
@@ -383,6 +372,10 @@ const formatUnit = (quantity: number, unit: string): string => {
     URL.revokeObjectURL(url);
   };
 
+
+// Après exportPlanningAndGroceries et avant le rendu...
+
+  // Gestion des recettes
   const handleSubmit = () => {
     if (formData.name.trim() === "") {
       alert("Le nom de la recette est obligatoire");
@@ -401,6 +394,7 @@ const formatUnit = (quantity: number, unit: string): string => {
       setRecipes(recipes.map(r => 
         r.id === editingRecipe.id ? { ...formData, id: editingRecipe.id } : r
       ));
+      
       setWeeklyPlan(prev => {
         const newPlan = { ...prev };
         Object.keys(newPlan).forEach(day => {
@@ -428,7 +422,7 @@ const formatUnit = (quantity: number, unit: string): string => {
     });
   };
 
-  const handleEdit = (recipe) => {
+  const handleEdit = (recipe: Recipe) => {
     setEditingRecipe(recipe);
     setFormData({
       name: recipe.name,
@@ -439,7 +433,7 @@ const formatUnit = (quantity: number, unit: string): string => {
     setShowEditDialog(true);
   };
 
-  const handleDeleteRecipe = (recipeId) => {
+  const handleDeleteRecipe = (recipeId: number) => {
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette recette ?')) {
       return;
     }
@@ -459,33 +453,38 @@ const formatUnit = (quantity: number, unit: string): string => {
     });
   };
   
+  
   // Affichage du loader pendant le chargement
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   // Rendu principal
   return (
-    <div className="p-4 max-w-6xl mx-auto">
+    <div className="p-4 max-w-6xl mx-auto animate-fade-in">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Planning */}
-        <Card>
-          <CardHeader>
+        <Card className="card-hover bg-white">
+          <CardHeader className="bg-gray-50 rounded-t-lg border-b">
             <CardTitle className="flex justify-between items-center">
-              Planning de la semaine
+              <span className="text-gray-800">Planning de la semaine</span>
               <div className="flex gap-2">
-                <Button onClick={generateWeeklyPlan} variant="outline">
+                <Button 
+                  onClick={generateWeeklyPlan} 
+                  variant="outline"
+                  className="button-hover bg-blue-50 hover:bg-blue-100 text-blue-700"
+                >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Générer
                 </Button>
                 <Button 
                   onClick={exportPlanningAndGroceries} 
                   variant="outline"
-                  className="bg-green-50 hover:bg-green-100"
+                  className="button-hover bg-green-50 hover:bg-green-100 text-green-700"
                 >
                   <ShoppingBag className="w-4 h-4 mr-2" />
                   Exporter
@@ -493,11 +492,17 @@ const formatUnit = (quantity: number, unit: string): string => {
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {Object.entries(weeklyPlan).map(([day, meals]) => (
-              <div key={day} className="mb-4">
-                <h3 className="font-bold mb-2 capitalize">{day}</h3>
-                <div className="space-y-2">
+          <CardContent className="space-y-4 p-4">
+            {Object.entries(weeklyPlan).map(([day, meals], index) => (
+              <div 
+                key={day} 
+                className="animate-slide-in bg-white rounded-lg p-4 shadow-sm"
+                style={{
+                  animationDelay: `${index * 0.1}s`
+                }}
+              >
+                <h3 className="font-bold mb-3 capitalize text-gray-800 border-b pb-2">{day}</h3>
+                <div className="space-y-3">
                   <MealComponent 
                     day={day} 
                     period="midi" 
@@ -519,105 +524,138 @@ const formatUnit = (quantity: number, unit: string): string => {
         </Card>
 
         {/* Liste de courses */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <ShoppingBag className="w-5 h-5 inline-block mr-2" />
+        <Card className="card-hover bg-white">
+          <CardHeader className="bg-gray-50 rounded-t-lg border-b">
+            <CardTitle className="flex items-center text-gray-800">
+              <ShoppingBag className="w-5 h-5 mr-2 text-green-600" />
               Liste de courses
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {Object.entries(calculateGroceryList()).map(([category, ingredients]) => (
-              <div key={category} className="mb-4">
-                <h3 className="font-bold mb-2">{category}</h3>
-                {ingredients.map((ingredient, index) => (
-                  <div key={index} className="mb-1 pl-4">
-                    {ingredient.name}: {ingredient.quantity} {formatUnit(ingredient.quantity, ingredient.unit)}
+          <CardContent className="p-4">
+            <div className="space-y-6">
+              {Object.entries(calculateGroceryList()).map(([category, ingredients], index) => (
+                <div 
+                  key={category} 
+                  className="animate-fade-in"
+                  style={{
+                    animationDelay: `${index * 0.1}s`
+                  }}
+                >
+                  <h3 className="font-bold mb-3 text-gray-800 bg-gray-50 p-2 rounded">
+                    {category}
+                  </h3>
+                  <div className="space-y-2 pl-4">
+                    {ingredients.map((ingredient, idx) => (
+                      <div 
+                        key={idx} 
+                        className="text-gray-700 hover:bg-gray-50 p-2 rounded transition-colors duration-200"
+                      >
+                        {ingredient.name}: {ingredient.quantity} {formatUnit(ingredient.quantity, ingredient.unit)}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ))}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Liste des préparations */}
+        <Card className="col-span-1 md:col-span-2 mt-4 card-hover bg-white">
+          <CardHeader className="bg-gray-50 rounded-t-lg border-b">
+            <CardTitle className="text-gray-800">
+              Préparations de la semaine
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="space-y-6">
+              {Array.from(
+                new Set(
+                  Object.values(weeklyPlan)
+                    .flatMap(day => [day.midi, day.soir])
+                    .filter(meal => meal && meal.instructions && meal.instructions.length > 0)
+                    .map(meal => meal.id)
+                )
+              ).map((recipeId, index) => {
+                const recipe = recipes.find(r => r.id === recipeId);
+                if (!recipe || !recipe.instructions) return null;
+
+                return (
+                  <div 
+                    key={recipe.id} 
+                    className="border rounded-lg p-4 hover:shadow-md transition-shadow duration-300 animate-fade-in"
+                    style={{
+                      animationDelay: `${index * 0.1}s`
+                    }}
+                  >
+                    <h3 className="font-bold mb-4 text-gray-800">{recipe.name}</h3>
+                    <ol className="list-decimal pl-5 space-y-2">
+                      {recipe.instructions.map((instruction, idx) => (
+                        <li 
+                          key={idx} 
+                          className="text-gray-700 hover:bg-gray-50 p-2 rounded transition-colors duration-200"
+                        >
+                          {instruction}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       </div>
 	  
-{/* Liste des préparations */}
-<Card className="col-span-1 md:col-span-2 mt-4">
-  <CardHeader>
-    <CardTitle>
-      Préparations de la semaine
-    </CardTitle>
-  </CardHeader>
-  <CardContent>
-    <div className="space-y-6">
-      {/* Créer un Set des recettes uniques du planning */}
-      {Array.from(
-        new Set(
-          Object.values(weeklyPlan)
-            .flatMap(day => [day.midi, day.soir])
-            .filter(meal => meal && meal.instructions && meal.instructions.length > 0)
-            .map(meal => meal.id)
-        )
-      ).map(recipeId => {
-        const recipe = recipes.find(r => r.id === recipeId);
-        if (!recipe || !recipe.instructions) return null;
-
-        return (
-          <div key={recipe.id} className="border rounded-lg p-4">
-            <h3 className="font-bold mb-4">{recipe.name}</h3>
-            <ol className="list-decimal pl-5">
-              {recipe.instructions.map((instruction, idx) => (
-                <li key={idx} className="mb-1">
-                  {instruction}
-                </li>
-              ))}
-            </ol>
-          </div>
-        );
-      })}
-    </div>
-  </CardContent>
-</Card>
-
-      {/* Section Recettes */}
-      <Card className="mt-4">
-        <CardHeader>
+	  {/* Section Recettes */}
+      <Card className="mt-4 card-hover bg-white">
+        <CardHeader className="bg-gray-50 rounded-t-lg border-b">
           <CardTitle className="flex justify-between items-center">
-            Ingrédients
-            <Button onClick={() => {
-              setEditingRecipe(null);
-              setFormData({
-                name: "",
-                ingredients: [{ name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }],
-                tags: [],
-                instructions: []
-              });
-              setShowEditDialog(true);
-            }}>
+            <span className="text-gray-800">Recettes</span>
+            <Button 
+              onClick={() => {
+                setEditingRecipe(null);
+                setFormData({
+                  name: "",
+                  ingredients: [{ name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }],
+                  tags: [],
+                  instructions: []
+                });
+                setShowEditDialog(true);
+              }}
+              className="button-hover bg-blue-600 hover:bg-blue-700 text-white"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Nouvelle recette
             </Button>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {recipes.map(recipe => (
-              <Card key={recipe.id}>
-                <CardHeader>
+            {recipes.map((recipe, index) => (
+              <Card 
+                key={recipe.id} 
+                className="recipe-card"
+                style={{
+                  animationDelay: `${index * 0.1}s`
+                }}
+              >
+                <CardHeader className="bg-gray-50 border-b">
                   <CardTitle className="text-lg flex justify-between items-center">
-                    {recipe.name}
+                    <span className="text-gray-800">{recipe.name}</span>
                     <div className="flex gap-2">
                       <Button 
                         variant="ghost" 
                         size="sm"
                         onClick={() => handleEdit(recipe)}
+                        className="button-hover text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        className="text-red-600 hover:text-red-800"
+                        className="button-hover text-red-600 hover:text-red-700 hover:bg-red-50"
                         onClick={() => handleDeleteRecipe(recipe.id)}
                       >
                         <X className="h-4 w-4" />
@@ -625,28 +663,30 @@ const formatUnit = (quantity: number, unit: string): string => {
                     </div>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="text-sm mb-2">
+                <CardContent className="p-4">
+                  <div className="text-sm mb-3 bg-blue-50 text-blue-700 p-2 rounded">
                     Servi : {recipe.tags.join(' et ')}
                   </div>
                   
                   {/* Ingrédients */}
                   <div className="mb-4">
-                    <h4 className="font-medium mb-2">Ingrédients :</h4>
-                    {recipe.ingredients.map((ingredient, idx) => (
-                      <div key={idx} className="text-sm">
-                        {ingredient.name}: {ingredient.quantity} {formatUnit(ingredient.quantity, ingredient.unit)}
-                      </div>
-                    ))}
+                    <h4 className="font-medium mb-2 text-gray-800 border-b pb-1">Ingrédients :</h4>
+                    <div className="space-y-1">
+                      {recipe.ingredients.map((ingredient, idx) => (
+                        <div key={idx} className="text-sm text-gray-600 hover:bg-gray-50 p-1 rounded transition-colors duration-200">
+                          {ingredient.name}: {ingredient.quantity} {formatUnit(ingredient.quantity, ingredient.unit)}
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Instructions */}
                   {recipe.instructions && recipe.instructions.length > 0 && (
                     <div>
-                      <h4 className="font-medium mb-2">Préparation :</h4>
-                      <ol className="list-decimal pl-5 text-sm">
+                      <h4 className="font-medium mb-2 text-gray-800 border-b pb-1">Préparation :</h4>
+                      <ol className="list-decimal pl-5 text-sm space-y-1">
                         {recipe.instructions.map((instruction, idx) => (
-                          <li key={idx} className="mb-1">
+                          <li key={idx} className="text-gray-600 hover:bg-gray-50 p-1 rounded transition-colors duration-200">
                             {instruction}
                           </li>
                         ))}
@@ -662,23 +702,23 @@ const formatUnit = (quantity: number, unit: string): string => {
 
       {/* Dialog pour édition/création de recette */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-white animate-scale-in">
+          <DialogHeader className="border-b pb-4">
+            <DialogTitle className="text-xl font-semibold text-gray-800">
               {editingRecipe ? 'Modifier la recette' : 'Nouvelle recette'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-6 py-4">
             <input
               type="text"
               placeholder="Nom de la recette"
-              className="w-full p-2 border rounded"
+              className="w-full p-3 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
 
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2">
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded transition-colors duration-200">
                 <Checkbox
                   checked={formData.tags.includes('midi')}
                   onCheckedChange={(checked) => {
@@ -690,9 +730,9 @@ const formatUnit = (quantity: number, unit: string): string => {
                     }));
                   }}
                 />
-                <span>Midi</span>
+                <span className="text-gray-700">Midi</span>
               </label>
-              <label className="flex items-center gap-2">
+              <label className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded transition-colors duration-200">
                 <Checkbox
                   checked={formData.tags.includes('soir')}
                   onCheckedChange={(checked) => {
@@ -704,18 +744,19 @@ const formatUnit = (quantity: number, unit: string): string => {
                     }));
                   }}
                 />
-                <span>Soir</span>
+                <span className="text-gray-700">Soir</span>
               </label>
             </div>
 
             {/* Ingrédients */}
-            <div className="space-y-2">
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-800">Ingrédients</h3>
               {formData.ingredients.map((ingredient, index) => (
-                <div key={index} className="flex gap-2">
+                <div key={index} className="grid grid-cols-[2fr,1fr,1fr,1.5fr,auto] gap-2 animate-fade-in">
                   <input
                     type="text"
                     placeholder="Ingrédient"
-                    className="flex-1 p-2 border rounded"
+                    className="p-2 border rounded focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                     value={ingredient.name}
                     onChange={(e) => {
                       const newIngredients = [...formData.ingredients];
@@ -726,7 +767,7 @@ const formatUnit = (quantity: number, unit: string): string => {
                   <input
                     type="number"
                     placeholder="Quantité"
-                    className="w-24 p-2 border rounded"
+                    className="p-2 border rounded focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                     value={ingredient.quantity}
                     onChange={(e) => {
                       const newIngredients = [...formData.ingredients];
@@ -735,7 +776,7 @@ const formatUnit = (quantity: number, unit: string): string => {
                     }}
                   />
                   <select
-                    className="w-24 p-2 border rounded"
+                    className="p-2 border rounded focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                     value={ingredient.unit}
                     onChange={(e) => {
                       const newIngredients = [...formData.ingredients];
@@ -749,7 +790,7 @@ const formatUnit = (quantity: number, unit: string): string => {
                     <option value="pièces">pièces</option>
                   </select>
                   <select
-                    className="w-32 p-2 border rounded"
+                    className="p-2 border rounded focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                     value={ingredient.category}
                     onChange={(e) => {
                       const newIngredients = [...formData.ingredients];
@@ -769,39 +810,44 @@ const formatUnit = (quantity: number, unit: string): string => {
                       const newIngredients = formData.ingredients.filter((_, i) => i !== index);
                       setFormData({ ...formData, ingredients: newIngredients });
                     }}
+                    className="button-hover text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setFormData(prev => ({
+                    ...prev,
+                    ingredients: [
+                      ...prev.ingredients, 
+                      { name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }
+                    ]
+                  }));
+                }}
+                className="w-full button-hover bg-gray-50 hover:bg-gray-100"
+              >
+                Ajouter un ingrédient
+              </Button>
             </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setFormData(prev => ({
-                  ...prev,
-                  ingredients: [...prev.ingredients, { name: "", quantity: 0, unit: "g", category: CATEGORIES.AUTRES }]
-                }));
-              }}
-            >
-              Ajouter un ingrédient
-            </Button>
-
             {/* Instructions */}
-            <div className="border-t pt-4">
-              <h3 className="font-medium mb-2">Instructions de préparation</h3>
+            <div className="space-y-4">
+              <h3 className="font-medium text-gray-800">Instructions de préparation</h3>
               <div className="space-y-2">
                 {(formData.instructions || []).map((instruction, index) => (
-                  <div key={index} className="flex gap-2">
-                    <span className="py-2 px-3 bg-gray-100 rounded-l">
+                  <div key={index} className="flex gap-2 animate-fade-in">
+                    <span className="py-2 px-3 bg-gray-100 rounded-l text-gray-600">
                       {index + 1}.
                     </span>
                     <input
                       type="text"
                       placeholder={`Étape ${index + 1}`}
-                      className="flex-1 p-2 border rounded-r"
+                      className="flex-1 p-2 border rounded-r focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                       value={instruction}
                       onChange={(e) => {
                         const newInstructions = [...(formData.instructions || [])];
@@ -815,6 +861,7 @@ const formatUnit = (quantity: number, unit: string): string => {
                         const newInstructions = formData.instructions?.filter((_, i) => i !== index);
                         setFormData(prev => ({ ...prev, instructions: newInstructions }));
                       }}
+                      className="button-hover text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -829,13 +876,14 @@ const formatUnit = (quantity: number, unit: string): string => {
                       instructions: [...(prev.instructions || []), '']
                     }));
                   }}
+                  className="w-full button-hover bg-gray-50 hover:bg-gray-100"
                 >
                   Ajouter une étape
                 </Button>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-end gap-2 pt-4 border-t">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -848,10 +896,14 @@ const formatUnit = (quantity: number, unit: string): string => {
                     instructions: []
                   });
                 }}
+                className="button-hover bg-gray-50 hover:bg-gray-100"
               >
                 Annuler
               </Button>
-              <Button onClick={handleSubmit}>
+              <Button 
+                onClick={handleSubmit}
+                className="button-hover bg-blue-600 hover:bg-blue-700 text-white"
+              >
                 {editingRecipe ? 'Modifier' : 'Ajouter'}
               </Button>
             </div>
