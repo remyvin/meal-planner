@@ -235,6 +235,54 @@ const MealPlanner = () => {
       loadData();
     }
   }, []);
+  
+  const exportData = () => {
+  const data = {
+    recipes: recipes,
+    weeklyPlan: weeklyPlan,
+    version: "1.0" // Pour gérer les futures versions
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `meal-planner-backup-${new Date().toISOString().split('T')[0]}.json`;
+  
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target?.result as string);
+      
+      // Vérifier que le fichier est valide
+      if (data.recipes && Array.isArray(data.recipes)) {
+        setRecipes(data.recipes);
+        localStorage.setItem('recipes', JSON.stringify(data.recipes));
+      }
+      
+      if (data.weeklyPlan) {
+        setWeeklyPlan(data.weeklyPlan);
+        localStorage.setItem('weeklyPlan', JSON.stringify(data.weeklyPlan));
+      }
+
+      alert('Import réussi !');
+    } catch (error) {
+      alert('Erreur lors de l\'import du fichier');
+      console.error('Import error:', error);
+    }
+  };
+  reader.readAsText(file);
+};
 
   // Sauvegarde des données
   React.useEffect(() => {
@@ -491,6 +539,31 @@ const MealPlanner = () => {
                 </Button>
               </div>
             </CardTitle>
+			<div className="flex gap-2">
+  <Button 
+    onClick={exportData}
+    variant="outline"
+    className="bg-blue-50 hover:bg-blue-100 text-blue-700"
+  >
+    Sauvegarder les données
+  </Button>
+
+  <label>
+    <input
+      type="file"
+      accept=".json"
+      onChange={importData}
+      style={{ display: 'none' }}
+    />
+    <Button 
+      variant="outline"
+      className="bg-green-50 hover:bg-green-100 text-green-700"
+      onClick={() => document.querySelector('input[type="file"]')?.click()}
+    >
+      Restaurer les données
+    </Button>
+  </label>
+</div>
           </CardHeader>
           <CardContent className="space-y-4 p-4">
             {Object.entries(weeklyPlan).map(([day, meals], index) => (
