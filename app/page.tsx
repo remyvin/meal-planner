@@ -1,4 +1,4 @@
-import MealPlanner from './components/meal-planner';
+import MealPlanner from '../components/meal-planner/meal-planner';
 
 export default function Home() {
   return (

@@ -80,8 +80,8 @@ const defaultRecipes: Recipe[] = [
 
 // ------------ COMPOSANT REPAS ------------
 const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealComponentProps) => {
-  const [localSearchQuery, setLocalSearchQuery] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState<string>("");
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -94,40 +94,86 @@ const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealCompon
     }
   }, [isOpen]);
 
-  const getFilteredRecipes = (period, query) => {
-    return recipes.filter(recipe => 
-      recipe.tags.includes(period) && 
-      recipe.name.toLowerCase().includes(query.toLowerCase())
-    );
-  };
+const getFilteredRecipes = (period: MealTime, query: string): Recipe[] => {
+  // Normaliser la recherche en supprimant les espaces superflus
+  const normalizedQuery = query.toLowerCase().trim();
+  const seenIds = new Set<number>();
+  
+  const filtered = recipes
+    .filter(recipe => {
+      if (seenIds.has(recipe.id)) return false;
+      seenIds.add(recipe.id);
+      
+      const isCorrectPeriod = recipe.tags.includes(period);
+      if (!isCorrectPeriod) return false;
+      
+      // Normaliser le nom de la recette
+      const recipeName = recipe.name
+        .toLowerCase()
+        // Ajouter des espaces autour des mots
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        // Supprimer les espaces multiples
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      // Recherche plus flexible
+      return normalizedQuery === '' || 
+             recipeName.includes(normalizedQuery) ||
+             recipeName.replace(/\s+/g, '').includes(normalizedQuery.replace(/\s+/g, ''));
+    })
+    .sort((a, b) => {
+      const aName = a.name.toLowerCase().trim();
+      const bName = b.name.toLowerCase().trim();
+      return aName.localeCompare(bName, 'fr', { sensitivity: 'base' });
+    });
+
+  return filtered;
+};
+
+const highlightMatch = (text: string, query: string) => {
+  if (!query.trim()) return text;
+  
+  // Normaliser le texte pour l'affichage
+  const displayText = text
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Créer un pattern qui ignore les espaces
+  const escapedQuery = query.trim()
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    .replace(/\s+/g, '\\s*');
+  
+  const parts = displayText.split(new RegExp(`(${escapedQuery})`, 'gi'));
+  
+  return (
+    <>
+      {parts.map((part, i) => 
+        part.toLowerCase() === query.toLowerCase() ? (
+          <span key={i} className="bg-yellow-100">{part}</span>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+};
 
   return (
-    <div className="meal-card flex items-center justify-between p-3 animate-slide-in">
-      <div className="flex items-center gap-3">
-        {period === 'midi' ? (
-          <div className="meal-period-midi">
-            <Sun className="w-4 h-4" />
-          </div>
-        ) : (
-          <div className="meal-period-soir">
-            <Moon className="w-4 h-4" />
-          </div>
-        )}
-        <span className="font-medium text-gray-800">{meal?.name || 'Pas de repas'}</span>
+    <div className="flex items-center justify-between p-2 border rounded">
+      <div className="flex items-center gap-2">
+        {period === 'midi' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        <span>{meal?.name || 'Pas de repas'}</span>
       </div>
       <div className="flex gap-2">
         <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
           <DropdownMenuTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="button-hover bg-white hover:bg-gray-50"
-            >
+            <Button variant="outline" size="sm">
               <Search className="w-4 h-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent 
-            className="w-64 bg-white shadow-lg border animate-scale-in"
+            className="w-64 bg-white shadow-lg border"
             onCloseAutoFocus={(e) => e.preventDefault()}
           >
             <div className="p-2">
@@ -142,22 +188,32 @@ const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealCompon
                 onKeyDown={(e) => e.stopPropagation()}
               />
             </div>
-            {getFilteredRecipes(period, localSearchQuery).map(recipe => (
-              <DropdownMenuItem
-                key={recipe.id}
-                onClick={() => {
-                  setWeeklyPlan(prev => ({
-                    ...prev,
-                    [day]: { ...prev[day], [period]: recipe }
-                  }));
-                  setLocalSearchQuery("");
-                  setIsOpen(false);
-                }}
-                className="cursor-pointer hover:bg-blue-50 transition-colors duration-200"
-              >
-                {recipe.name}
-              </DropdownMenuItem>
-            ))}
+            {getFilteredRecipes(period, localSearchQuery).length === 0 ? (
+              <div className="p-2 text-center text-gray-500">
+                Aucune recette trouvée
+              </div>
+            ) : (
+              getFilteredRecipes(period, localSearchQuery).map(recipe => (
+				<DropdownMenuItem
+				  key={recipe.id}
+				  onClick={() => {
+					setWeeklyPlan(prev => ({
+					  ...prev,
+					  [day]: { ...prev[day], [period]: recipe }
+					}));
+					setLocalSearchQuery("");
+					setIsOpen(false);
+				  }}
+				  className="cursor-pointer hover:bg-slate-100"
+				>
+				  {localSearchQuery.trim() !== '' ? (
+					highlightMatch(recipe.name, localSearchQuery)
+				  ) : (
+					recipe.name
+				  )}
+				</DropdownMenuItem>
+              ))
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -171,7 +227,6 @@ const MealComponent = ({ day, period, meal, setWeeklyPlan, recipes }: MealCompon
                 [day]: { ...prev[day], [period]: null }
               }));
             }}
-            className="button-danger button-hover"
           >
             <X className="w-4 h-4" />
           </Button>
